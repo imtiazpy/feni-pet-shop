@@ -1,0 +1,382 @@
+{% extends template_to_extend %}
+{% load static %}
+{% block title %}Create Sale | Pet IMS{% endblock %}
+
+{% block content %}
+<div class="mb-6 flex justify-between items-center">
+  <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Create New Sale</h1>
+  <a href="{% url 'sales:sale_list' %}" class="btn btn-ghost btn-sm">
+    <span class="w-4 h-4 flex items-center justify-center">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 15.75L3 12m0 0l3.75-3.75M3 12h18" />
+      </svg>
+    </span>
+    Back to Sales
+  </a>
+</div>
+
+<div x-data="saleManager()" x-init="init()">
+  <form id="saleForm" method="post" class="space-y-6" @submit.prevent="validateAndSubmit">
+    {% csrf_token %}
+    
+    <!-- Sale Items Section -->
+    <div class="bg-base-100 rounded-lg shadow-sm border border-base-300 p-6">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-semibold text-base-content flex items-center">
+          <svg class="w-5 h-5 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+          </svg>
+          Sale Items
+        </h2>
+        <button type="button" @click="openItemModal()" class="btn btn-primary btn-sm">
+          <span class="w-4 h-4 flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+            </svg>
+          </span>
+          Add Item
+        </button>
+      </div>
+
+      <div id="saleItemsContainer" class="space-y-4">
+        <!-- Empty state -->
+        <div x-show="selectedItems.length === 0" class="text-center py-8 text-base-content/60">
+          <div class="flex flex-col items-center gap-2">
+            <div class="w-12 h-12 rounded-full bg-base-200 flex items-center justify-center">
+              <span class="text-base-content/40 text-xl">🛒</span>
+            </div>
+            <span class="font-medium">No items added yet</span>
+            <span class="text-sm text-base-content/40">Click "Add Item" to start building the sale</span>
+          </div>
+        </div>
+
+        <!-- Hidden inputs for form submission -->
+        <template x-for="(item, index) in selectedItems" :key="item.stockId">
+          <div>
+            <input type="hidden" :name="'stock_item_' + index" :value="item.stockId">
+            <input type="hidden" :name="'quantity_' + index" x-model="item.quantity">
+            <input type="hidden" :name="'sale_price_' + index" :value="item.salePrice">
+          </div>
+        </template>
+      </div>
+
+      <!-- Items Summary Table -->
+      <div x-show="selectedItems.length > 0" class="mt-6">
+        <div class="overflow-x-auto bg-base-100 rounded-lg border border-base-300">
+          <table class="table w-full text-sm">
+            <thead class="bg-base-200/50">
+              <tr>
+                <th class="font-semibold">Product</th>
+                <th class="font-semibold">Batch</th>
+                <th class="font-semibold">Qty</th>
+                <th class="font-semibold">Unit Price</th>
+                <th class="font-semibold">Line Total</th>
+                <th class="font-semibold">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <template x-for="(item, index) in selectedItems" :key="item.stockId">
+                <tr>
+                  <td>
+                    <div class="flex items-center gap-2">
+                      <img x-show="item.productImage" :src="item.productImage" alt="Product" class="w-8 h-8 rounded object-cover">
+                      <span class="font-medium" x-text="item.productName"></span>
+                    </div>
+                  </td>
+                  <td class="font-mono text-xs" x-text="item.batch || '—'"></td>
+                  <td>
+                    <input type="number" x-model.number="item.quantity" :min="1" :max="item.available"
+                           class="input input-xs input-bordered w-20" @input="updatePaymentSummary()">
+                    <div class="text-xs text-gray-500 mt-1" x-text="'Max: ' + item.available"></div>
+                  </td>
+                  <td class="font-semibold text-info" x-text="'৳ ' + item.salePrice.toFixed(2)"></td>
+                  <td class="font-bold text-success" x-text="'৳ ' + (item.quantity * item.salePrice).toFixed(2)"></td>
+                  <td>
+                    <button type="button" @click="removeItem(index)" class="btn btn-error btn-xs">
+                      <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                      </svg>
+                    </button>
+                  </td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Payment Details -->
+    <div class="bg-base-100 rounded-lg shadow-sm border border-base-300 p-6">
+      <h2 class="text-xl font-semibold text-base-content mb-4 flex items-center">
+        <svg class="w-5 h-5 mr-2 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+        </svg>
+        Payment Details
+      </h2>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="space-y-4">
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text font-medium">Discount Amount (৳)</span>
+            </label>
+            <input type="number" name="discount_amount" x-model.number="discountAmount" step="0.01" min="0" value="0.00"
+                   class="input input-bordered bg-white dark:bg-gray-700" placeholder="0.00" @input="updatePaymentSummary()">
+          </div>
+
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text font-medium">Notes (Optional)</span>
+            </label>
+            <textarea name="notes" x-model="notes" class="textarea textarea-bordered bg-white dark:bg-gray-700" 
+                      placeholder="Add any additional notes for this sale..." rows="3"></textarea>
+          </div>
+        </div>
+
+        <div class="space-y-4">
+          <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
+            <h3 class="font-semibold text-gray-900 dark:text-gray-100 mb-3">Payment Summary</h3>
+            <div class="space-y-2 text-sm">
+              <div class="flex justify-between">
+                <span class="text-gray-700 dark:text-gray-300">Subtotal:</span>
+                <span class="font-semibold text-blue-600 dark:text-blue-400" x-text="'৳ ' + subtotal.toFixed(2)"></span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-700 dark:text-gray-300">Discount:</span>
+                <span class="font-semibold text-orange-600 dark:text-orange-400" x-text="'৳ ' + discountAmount.toFixed(2)"></span>
+              </div>
+              <hr class="border-gray-300 dark:border-gray-600">
+              <div class="flex justify-between text-lg">
+                <span class="font-bold text-gray-900 dark:text-gray-100">Final Total:</span>
+                <span class="font-bold text-green-600 dark:text-green-400" x-text="'৳ ' + finalTotal.toFixed(2)"></span>
+              </div>
+            </div>
+          </div>
+
+          <div class="alert alert-info text-sm">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <span>Stock will be automatically deducted upon sale completion.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="flex gap-3 pt-4">
+      <button type="submit" :disabled="selectedItems.length === 0" class="btn btn-success flex-1">
+        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+        </svg>
+        Complete Sale
+      </button>
+      <a href="{% url 'sales:sale_list' %}" class="btn btn-ghost flex-1">
+        Cancel
+      </a>
+    </div>
+
+    <!-- Hidden field for item count -->
+    <input type="hidden" name="item_count" x-model="selectedItems.length">
+  </form>
+
+  <!-- Item Selection Modal -->
+  <div x-show="showModal" class="fixed inset-0 z-50 overflow-y-auto" x-cloak>
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+      <!-- Background overlay -->
+      <div x-show="showModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" 
+           x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200" 
+           x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+           class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" @click="closeItemModal()"></div>
+
+      <!-- Modal panel -->
+      <div x-show="showModal" x-transition:enter="ease-out duration-300" 
+           x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" 
+           x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100" 
+           x-transition:leave="ease-in duration-200" 
+           x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100" 
+           x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+           class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
+        
+        <div class="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-bold text-gray-900 dark:text-gray-100">Select Product to Add</h3>
+            <button @click="closeItemModal()" class="btn btn-sm btn-circle btn-ghost">✕</button>
+          </div>
+          
+          <div class="form-control mb-4">
+            <label class="label">
+              <span class="label-text font-medium">Search Product</span>
+            </label>
+            <input type="text" x-model="searchTerm" placeholder="Search by product name or batch..." 
+                   class="input input-bordered bg-white dark:bg-gray-700">
+          </div>
+
+          <div class="overflow-x-auto max-h-96">
+            <table class="table w-full text-sm">
+              <thead>
+                <tr>
+                  <th>Product</th>
+                  <th>Batch</th>
+                  <th>Available Stock</th>
+                  <th>Sale Price</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                <template x-for="item in filteredStockItems" :key="item.id">
+                  <tr>
+                    <td>
+                      <div class="flex items-center gap-2">
+                        <img x-show="item.productImage" :src="item.productImage" alt="Product" class="w-8 h-8 rounded object-cover">
+                        <span class="font-medium" x-text="item.productName"></span>
+                      </div>
+                    </td>
+                    <td class="font-mono text-xs" x-text="item.batch || '—'"></td>
+                    <td>
+                      <span class="font-semibold" :class="item.available <= 10 ? 'text-warning' : 'text-success'" x-text="item.available"></span>
+                    </td>
+                    <td class="font-semibold text-info" x-text="'৳ ' + item.salePrice.toFixed(2)"></td>
+                    <td>
+                      <button type="button" @click="selectProduct(item)" class="btn btn-primary btn-xs">
+                        Select
+                      </button>
+                    </td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% block extra_script %}
+<script>
+function saleManager() {
+  return {
+    selectedItems: [],
+    showModal: false,
+    searchTerm: '',
+    discountAmount: 0,
+    notes: '',
+    stockItems: [],
+    
+    init() {
+      // Initialize stock items from backend
+      this.stockItems = [
+        {% for stock_item in stock_items %}
+        {% if stock_item.quantity > 0 %}
+        {
+          id: {{ stock_item.id }},
+          productName: "{{ stock_item.product.name|escapejs }}",
+          productImage: "{% if stock_item.product.image %}{{ stock_item.product.image.url }}{% endif %}",
+          batch: "{{ stock_item.batch_number|default:'' }}",
+          available: {{ stock_item.quantity }},
+          salePrice: {{ stock_item.sale_price }}
+        },
+        {% endif %}
+        {% endfor %}
+      ];
+    },
+
+    get subtotal() {
+      return this.selectedItems.reduce((sum, item) => sum + (item.quantity * item.salePrice), 0);
+    },
+
+    get finalTotal() {
+      return Math.max(0, this.subtotal - this.discountAmount);
+    },
+
+    get filteredStockItems() {
+      if (!this.searchTerm) return this.stockItems;
+      
+      const term = this.searchTerm.toLowerCase();
+      return this.stockItems.filter(item => 
+        item.productName.toLowerCase().includes(term) || 
+        item.batch.toLowerCase().includes(term)
+      );
+    },
+
+    openItemModal() {
+      this.showModal = true;
+      this.searchTerm = '';
+    },
+
+    closeItemModal() {
+      this.showModal = false;
+      this.searchTerm = '';
+    },
+
+    selectProduct(stockItem) {
+      // Check if item already exists
+      const existingItem = this.selectedItems.find(item => item.stockId === stockItem.id);
+      if (existingItem) {
+        alert('This product is already added to the sale.');
+        return;
+      }
+
+      // Add item to selected items
+      this.selectedItems.push({
+        stockId: stockItem.id,
+        productName: stockItem.productName,
+        productImage: stockItem.productImage,
+        batch: stockItem.batch,
+        available: stockItem.available,
+        salePrice: stockItem.salePrice,
+        quantity: 1
+      });
+
+      this.updatePaymentSummary();
+      this.closeItemModal();
+    },
+
+    removeItem(index) {
+      this.selectedItems.splice(index, 1);
+      this.updatePaymentSummary();
+    },
+
+    updatePaymentSummary() {
+      // Force reactivity update
+      this.$nextTick(() => {
+        // Payment summary is automatically updated by computed properties
+      });
+    },
+
+    validateAndSubmit(event) {
+      if (this.selectedItems.length === 0) {
+        alert('Please add at least one item to the sale.');
+        return;
+      }
+
+      if (this.discountAmount > this.subtotal) {
+        alert('Discount amount cannot exceed the subtotal.');
+        return;
+      }
+
+      // Validate quantities
+      for (let item of this.selectedItems) {
+        if (item.quantity > item.available) {
+          alert(`Quantity for ${item.productName} exceeds available stock.`);
+          return;
+        }
+      }
+
+      // Submit the form
+      event.target.submit();
+    }
+  }
+}
+</script>
+{% endblock %}
+
+<style>
+[x-cloak] { 
+  display: none !important; 
+}
+</style>
+
+{% endblock %}

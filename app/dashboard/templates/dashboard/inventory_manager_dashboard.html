@@ -1,0 +1,60 @@
+{% extends 'base_dashboard.html' %}
+{% block title %}Inventory Manager Dashboard | Pet IMS{% endblock %}
+{% block content %}
+<div class="flex min-h-screen bg-base-100">
+  <div class="flex-1 flex flex-col bg-base-100">
+    
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 p-6">
+      <div class="card bg-primary text-primary-content shadow-lg">
+        <div class="card-body">
+          <h3 class="card-title text-lg">Total Products</h3>
+          <p class="text-3xl font-bold">120</p>
+        </div>
+      </div>
+      <div class="card bg-success text-success-content shadow-lg">
+        <div class="card-body">
+          <h3 class="card-title text-lg">Products In Stock</h3>
+          <p class="text-3xl font-bold">95</p>
+        </div>
+      </div>
+      <div class="card bg-error text-error-content shadow-lg">
+        <div class="card-body">
+          <h3 class="card-title text-lg">Low Stock Items</h3>
+          <p class="text-3xl font-bold">25</p>
+        </div>
+      </div>
+    </div>
+    <div class="p-6">
+      <h3 class="text-xl font-semibold mb-4">Recent Activity</h3>
+      <div class="overflow-x-auto">
+        <table class="table table-zebra">
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th>Action</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Product A</td>
+              <td><span class="badge badge-success">Added</span></td>
+              <td>2023-10-01</td>
+            </tr>
+            <tr>
+              <td>Product B</td>
+              <td><span class="badge badge-warning">Updated</span></td>
+              <td>2023-10-02</td>
+            </tr>
+            <tr>
+              <td>Product C</td>
+              <td><span class="badge badge-error">Removed</span></td>
+              <td>2023-10-03</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

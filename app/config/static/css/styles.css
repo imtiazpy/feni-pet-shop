@@ -1,0 +1,320 @@
+/* Pet IMS Enterprise Login Styles */
+html {
+  height: 100%;
+}
+body {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  font-family: 'Segoe UI', 'Roboto', Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+}
+main {
+  flex: 1 0 auto;
+}
+
+/**** Login page/ form ****/
+
+.login-container {
+  background: #fff;
+  box-shadow: 0 8px 32px rgba(255, 165, 0, 0.15), 0 1.5px 8px rgba(255, 0, 0, 0.08);
+  border-top: 8px solid #ffb300;
+  border-bottom: 4px solid #ff7043;
+  position: relative;
+}
+
+.login-container h2, .login-container p {
+  color: #ff7043;
+}
+
+.login-container label {
+  color: #ff9800;
+  font-weight: 600;
+  margin-bottom: 0.3rem;
+}
+
+.login-container input[type="text"],
+.login-container input[type="password"] {
+  padding: 0.7rem 1rem;
+  border: 1.5px solid #ffd54f;
+  border-radius: 6px;
+  background: #fffbe6;
+  font-size: 1rem;
+  transition: border 0.2s;
+}
+
+.login-container input[type="text"]:focus,
+.login-container input[type="password"]:focus {
+  border: 1.5px solid #ff7043;
+  outline: none;
+}
+
+.login-container button[type="submit"] {
+  background: linear-gradient(90deg, #ffb300 0%, #ff7043 100%);
+  color: #fff;
+  font-weight: 700;
+  border: none;
+  border-radius: 6px;
+  padding: 0.9rem 0;
+  font-size: 1.1rem;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(255, 112, 67, 0.12);
+  transition: background 0.2s, transform 0.1s;
+}
+
+.login-container button[type="submit"]:hover {
+  background: linear-gradient(90deg, #ff7043 0%, #ffb300 100%);
+  transform: translateY(-2px) scale(1.03);
+}
+
+.login-container form p {
+  margin: 0;
+  color: #d84315;
+  font-size: 0.98rem;
+}
+
+/* --- Navbar Styles --- */
+.navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.7rem 2.2rem;
+  box-shadow: 0 2px 12px rgba(255, 112, 67, 0.08);
+  position: relative;
+  z-index: 10;
+}
+
+.navbar-brand {
+  display: flex;
+  align-items: center;
+}
+
+.navbar-title {
+  font-size: 1.45rem;
+  font-weight: 800;
+  color: #fff;
+  margin-left: 0.7rem;
+  letter-spacing: 1px;
+  text-shadow: 0 1px 4px rgba(255, 112, 67, 0.12);
+}
+
+.navbar-links {
+  list-style: none;
+  display: flex;
+  align-items: center; /* Vertically center all items */
+  gap: 1.7rem;
+  margin: 0;
+  padding: 0;
+  height: 48px; /* Ensures consistent height for all items */
+}
+
+.navbar-links li {
+  display: flex;
+  align-items: center;
+  height: 100%;
+}
+
+.navbar-links a,
+.nav-logout-btn,
+.navbar-user-info {
+  display: flex;
+  align-items: center;
+  height: 40px;
+  padding-top: 0;
+  padding-bottom: 0;
+  box-sizing: border-box;
+}
+
+.navbar-links a {
+  color: #fffbe6;
+  font-weight: 600;
+  text-decoration: none;
+  font-size: 1.08rem;
+  padding: 0 0.7rem;
+  border-radius: 4px;
+  transition: background 0.18s, color 0.18s;
+}
+
+.navbar-user-info {
+  color: #fffbe6;
+  font-size: 1.08rem;
+  font-weight: 500;
+  margin-left: 0.5rem;
+  margin-right: 0.5rem;
+  background: none;
+  border: none;
+  padding: 0 0.7rem;
+  border-radius: 4px;
+}
+
+.navbar-links a:hover, .navbar-links a:focus {
+  background: #fffbe6;
+  color: #ff7043;
+}
+
+/* --- Logout Button Styles --- */
+.nav-logout-btn {
+  background: linear-gradient(135deg, #e64a19 0%, #d84315 100%);
+  color: #fff;
+  font-weight: 600;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  padding: 0.5rem 1.2rem;
+  font-size: 0.95rem;
+  cursor: pointer;
+  box-shadow: 
+    0 4px 12px rgba(0, 0, 0, 0.15),
+    0 2px 4px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  backdrop-filter: blur(4px);
+}
+
+.nav-logout-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.nav-logout-btn:hover {
+  background: linear-gradient(135deg, #d84315 0%, #e64a19 100%);
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.5);
+  box-shadow: 
+    0 6px 20px rgba(0, 0, 0, 0.25),
+    0 4px 8px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.nav-logout-btn:hover::before {
+  left: 100%;
+}
+
+.nav-logout-btn:active {
+  transform: translateY(0);
+  box-shadow: 
+    0 2px 8px rgba(0, 0, 0, 0.2),
+    0 1px 3px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.nav-logout-btn:focus {
+  outline: none;
+  box-shadow: 
+    0 0 0 3px rgba(255, 255, 255, 0.4),
+    0 4px 16px rgba(0, 0, 0, 0.25),
+    0 2px 4px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+/* --- Footer Styles --- */
+.footer {
+  background: linear-gradient(90deg, #ff7043 0%, #ffb300 100%);
+  color: #fffbe6;
+  padding: 1.1rem 0;
+  text-align: center;
+  box-shadow: 0 -2px 12px rgba(255, 112, 67, 0.08);
+  margin-top: 2.5rem;
+  flex-shrink: 0;
+}
+
+.footer-brand {
+  font-size: 1.02rem;
+  color: #fffbe6;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+}
+
+
+/* --- Responsive --- */
+@media (max-width: 700px) {
+  .navbar {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 0.7rem 1rem;
+  }
+  .navbar-links {
+    gap: 1rem;
+  }
+}
+
+@media (max-width: 500px) {
+  .login-container {
+    max-width: 95vw;
+    padding: 1.2rem 0.5rem 1.5rem 0.5rem;
+  }
+}
+
+
+
+/* Footer specific enhancements */
+
+
+footer::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #3b82f6, transparent);
+  opacity: 0.3;
+}
+
+/* Smooth hover animations for links */
+footer a {
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+footer a:hover {
+  transform: translateX(2px);
+}
+
+/* Social media icons hover effects */
+footer .flex.items-center.gap-4 a:hover {
+  transform: translateY(-2px) scale(1.1);
+}
+
+/* Status indicator animation */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Responsive improvements */
+@media (max-width: 768px) {
+  footer .grid {
+    gap: 1.5rem;
+  }
+  
+  footer .col-span-1.lg\\:col-span-2 {
+    margin-bottom: 1rem;
+  }
+}
+
+/* Dark mode specific adjustments */
+[data-theme="dark"] footer::before {
+  background: linear-gradient(90deg, transparent, #60a5fa, transparent);
+}
+

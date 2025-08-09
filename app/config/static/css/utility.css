@@ -1,0 +1,14 @@
+.custom-bg {
+  background: linear-gradient(90deg, #ffb300 0%, #ff7043 100%);
+}
+
+.toast {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+

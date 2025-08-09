@@ -1,0 +1,181 @@
+{% extends template_to_extend %}
+{% block title %}Supplier List | Pet IMS{% endblock %}
+
+{% block content %}
+<div class="mb-6 flex justify-between items-center">
+  <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Supplier List</h1>
+
+  <div class="flex items-center gap-3">
+    <button class="btn btn-primary btn-sm">
+      Export {% include 'includes/svg/export_icon.html' %}
+    </button>
+
+    {% if request.user.role == 'admin' or request.user.role == 'inventory_manager' %}
+    <a 
+      class="btn btn-primary btn-sm" 
+      title="Create Supplier"
+      hx-get="{% url 'products:supplier_create' %}" 
+      hx-target="#supplierModalContent"
+      hx-swap="innerHTML"
+      onclick="supplierModal.showModal()"
+    >
+      Add Supplier
+      <span class="w-4 h-4 flex items-center justify-center">
+        {% include 'includes/svg/plus_icon.html' %}
+      </span>
+    </a>
+    {% endif %}
+  </div>
+</div>
+  
+<div class="overflow-x-auto bg-base-100 rounded-lg shadow-lg border border-base-300">
+  <table class="table w-full text-sm">
+    <thead class="bg-base-200/50 border-b border-base-300">
+      <tr class="text-base-content/90">
+        <th class="font-semibold">#</th>
+        <th class="font-semibold">Name</th>
+        <th class="font-semibold">Email</th>
+        <th class="font-semibold">Phone</th>
+        <th class="font-semibold">Products</th>
+        <th>Total Products</th>
+        <th class="font-semibold">Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for supplier in suppliers %}
+      <tr class="hover:bg-base-200 transition-colors duration-200 border-b border-base-300/50 {% cycle 'bg-base-100' 'bg-base-200/20' %}">
+        <td class="text-base-content/80">{{ forloop.counter }}</td>
+        <td class="font-medium text-base-content">{{ supplier.name }}</td>
+        <td class="text-base-content">{{ supplier.email|default:"—" }}</td>
+        <td class="text-base-content">{{ supplier.phone|default:"—" }}</td>
+        <td class="text-primary font-semibold">{{ supplier.total_product_items }}</td>
+        <td class="text-warning font-semibold">{{ supplier.get_product_quantities }}</td>
+        <td>
+          <div class="flex gap-1">
+            <div class="tooltip" data-tip="View Details">
+              <a 
+                class="btn btn-xs btn-info btn-outline hover:btn-info" 
+                hx-get="{% url 'products:supplier_detail' supplier.id %}" 
+                hx-target="#supplierModalContent"
+                hx-swap="innerHTML"
+                onclick="supplierModal.showModal()"
+              >
+                <span class="w-4 h-4 flex items-center justify-center">
+                  {% include 'includes/svg/circle_info_icon.html' %}
+                </span>
+              </a>
+            </div>
+            {% if request.user.role == 'admin' or request.user.role == 'inventory_manager' %}
+            <div class="tooltip" data-tip="Edit Supplier">
+              <a 
+                class="btn btn-xs btn-warning btn-outline hover:btn-warning" 
+                hx-get="{% url 'products:supplier_update' supplier.id %}" 
+                hx-target="#supplierModalContent"
+                hx-swap="innerHTML"
+                onclick="supplierModal.showModal()"
+              >
+                <span class="w-4 h-4 flex items-center justify-center">
+                  {% include 'includes/svg/pen_icon.html' %}
+                </span>
+              </a>
+            </div>
+            <div class="tooltip" data-tip="Delete Supplier">
+              <a 
+                class="btn btn-xs btn-error btn-outline hover:btn-error" 
+                hx-get="{% url 'products:supplier_delete' supplier.id %}" 
+                hx-target="#supplierModalContent"
+                hx-swap="innerHTML"
+                onclick="supplierModal.showModal()"
+              >
+                <span class="w-4 h-4 flex items-center justify-center">
+                  {% include 'includes/svg/delete_icon.html' %}
+                </span>
+              </a>
+            </div>
+            {% endif %}
+          </div>
+        </td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="6" class="text-center text-base-content/60 py-8">
+          <div class="flex flex-col items-center gap-2">
+            <div class="w-12 h-12 rounded-full bg-base-200 flex items-center justify-center">
+              <span class="text-base-content/40 text-xl">🏢</span>
+            </div>
+            <span class="font-medium">No suppliers found</span>
+            <span class="text-sm text-base-content/40">Start by adding your first supplier</span>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- Pagination -->
+{% if is_paginated %}
+<div class="mt-6 flex justify-center">
+  <div class="join bg-base-100 shadow-sm rounded-lg border border-base-300">
+    {% if page_obj.has_previous %}
+      <a href="?page=1" class="join-item btn btn-sm btn-ghost hover:bg-base-200">First</a>
+      <a href="?page={{ page_obj.previous_page_number }}" class="join-item btn btn-sm btn-ghost hover:bg-base-200">‹ Prev</a>
+    {% endif %}
+    <span class="join-item btn btn-sm btn-active">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}
+      <a href="?page={{ page_obj.next_page_number }}" class="join-item btn btn-sm btn-ghost hover:bg-base-200">Next ›</a>
+      <a href="?page={{ page_obj.paginator.num_pages }}" class="join-item btn btn-sm btn-ghost hover:bg-base-200">Last</a>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+
+{% comment %} Supplier create/update/detail/delete Modal {% endcomment %}
+
+<dialog id="supplierModal" class="modal">
+  <div class="modal-box max-w-4xl bg-white dark:bg-gray-700 border border-base-300">
+    <form method="dialog">
+      <button class="btn btn-sm btn-circle btn-ghost absolute right-3 top-3 hover:bg-base-200">✕</button>
+    </form>
+    <div id="supplierModalContent" class="mt-4">
+      <div class="flex items-center justify-center py-8">
+        <span class="loading loading-spinner loading-md text-primary"></span>
+      </div>
+    </div>
+  </div>
+</dialog>
+
+{% endblock %}
+
+{% block extra_script %}
+<script>
+  function bindSupplierDeleteLogic() {
+    const input = document.getElementById('supplierConfirmText');
+    const button = document.getElementById('supplierDeleteButton');
+  
+    if (!input || !button) {
+      return;
+    }
+  
+    input.addEventListener('input', function () {
+      const value = input.value.trim();
+  
+      if (value === 'DELETE') {
+        button.removeAttribute('disabled');
+      } else {
+        button.setAttribute('disabled', 'true');
+      }
+    });
+  }
+
+  document.body.addEventListener('htmx:afterSwap', (event) => {
+    const modalContent = event.target;
+
+    if (modalContent.id === 'supplierModalContent' && modalContent.querySelector('[data-delete-supplier-modal]')) {
+      console.log('HTMX swap completed. Binding delete logic.');
+      bindSupplierDeleteLogic();
+    }
+  });
+</script>
+  
+{% endblock %}

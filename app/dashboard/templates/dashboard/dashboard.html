@@ -1,0 +1,669 @@
+{% extends template_to_extend %}
+{% load static %}
+{% block title %}Dashboard | Pet IMS{% endblock %}
+
+{% block content %}
+<div x-data="dashboardManager()" x-init="init()">
+  <!-- Dashboard Header -->
+  <div class="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div>
+      <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
+      <p class="text-base-content/70 mt-1">Welcome back, {{ user.get_full_name|default:user.username }}!</p>
+    </div>
+    <div class="flex gap-2">
+      <button @click="refreshData()" :disabled="loading" class="btn btn-ghost btn-sm">
+        <svg class="w-4 h-4 mr-1" :class="{'animate-spin': loading}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+        </svg>
+        Refresh
+      </button>
+      <div class="dropdown dropdown-end">
+        <div tabindex="0" role="button" class="btn btn-primary btn-sm">
+          <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0 0l4-4m-4 4l-4-4"/>
+          </svg>
+          Quick Actions
+        </div>
+        <ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
+          <li><a href="{% url create_sale_url %}">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+            </svg>
+            Create Manual Sale
+          </a></li>
+          <li><a href="{% url pos_url %}">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M12 12h-.01m9.01 0a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            Open PoS System
+          </a></li>
+          <li><a href="{% url 'stock:stockitem_list' %}">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+            </svg>
+            Manage Inventory
+          </a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- KPI Cards -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <!-- Sales Today -->
+    <div class="bg-base-100 rounded-lg shadow-sm border border-base-300 p-6 hover:shadow-md transition-shadow">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-base-content/70 text-sm font-medium">Sales Today</p>
+          <div class="flex items-baseline gap-2">
+            <p class="text-3xl font-bold text-green-600">{{ sales_today_count }}</p>
+            <span class="text-sm text-base-content/60">transactions</span>
+          </div>
+          <p class="text-success font-semibold mt-1">৳ {{ sales_today_revenue|floatformat:2 }}</p>
+        </div>
+        <div class="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
+          <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- Total Products -->
+    <div class="bg-base-100 rounded-lg shadow-sm border border-base-300 p-6 hover:shadow-md transition-shadow">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-base-content/70 text-sm font-medium">Total Products</p>
+          <div class="flex items-baseline gap-2">
+            <p class="text-3xl font-bold text-blue-600">{{ total_products }}</p>
+            <span class="text-sm text-base-content/60">items</span>
+          </div>
+          <p class="text-info font-semibold mt-1">{{ total_stock_quantity }} in stock</p>
+        </div>
+        <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
+          <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- Low Stock Alert -->
+    <div class="bg-base-100 rounded-lg shadow-sm border border-base-300 p-6 hover:shadow-md transition-shadow">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-base-content/70 text-sm font-medium">Low Stock Items</p>
+          <div class="flex items-baseline gap-2">
+            <p class="text-3xl font-bold text-orange-600">{{ low_stock_items }}</p>
+            <span class="text-sm text-base-content/60">alerts</span>
+          </div>
+          <p class="text-error font-semibold mt-1">{{ out_of_stock_items }} out of stock</p>
+        </div>
+        <div class="w-12 h-12 bg-orange-100 dark:bg-orange-900/30 rounded-lg flex items-center justify-center">
+          <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- Active Suppliers -->
+    <div class="bg-base-100 rounded-lg shadow-sm border border-base-300 p-6 hover:shadow-md transition-shadow">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-base-content/70 text-sm font-medium">Active Suppliers</p>
+          <div class="flex items-baseline gap-2">
+            <p class="text-3xl font-bold text-purple-600">{{ total_suppliers }}</p>
+            <span class="text-sm text-base-content/60">partners</span>
+          </div>
+          <p class="text-purple-600 font-semibold mt-1">{{ supplier_stock_items }} stock items</p>
+        </div>
+        <div class="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center">
+          <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-4m-5 0H9m0 0H5m0 0H3m0 0h2M9 7h6m-6 4h6m-6 4h6"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Main Content Area -->
+    <div class="lg:col-span-2 space-y-6">
+      <!-- Sales Chart -->
+      <div class="bg-base-100 rounded-lg shadow-sm border border-base-300 p-6">
+        <div class="flex justify-between items-center mb-6">
+          <h2 class="text-xl font-semibold text-base-content flex items-center">
+            <svg class="w-5 h-5 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+            </svg>
+            Sales Performance (Last 7 Days)
+          </h2>
+          <div class="flex gap-2">
+            <button @click="chartPeriod = 'week'" :class="chartPeriod === 'week' ? 'btn-primary' : 'btn-outline'" class="btn btn-xs">7 Days</button>
+            <button @click="chartPeriod = 'month'" :class="chartPeriod === 'month' ? 'btn-primary' : 'btn-outline'" class="btn btn-xs">30 Days</button>
+          </div>
+        </div>
+        
+        <!-- Chart Placeholder -->
+        <div class="h-64 bg-base-200/30 rounded-lg flex items-center justify-center">
+          <div class="text-center text-base-content/50">
+            <svg class="w-12 h-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+            </svg>
+            <p class="font-medium">Sales Chart</p>
+            <p class="text-sm">Chart integration can be added here</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent Stock Movements -->
+      <div class="bg-base-100 rounded-lg shadow-sm border border-base-300 p-6">
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-xl font-semibold text-base-content flex items-center">
+            <svg class="w-5 h-5 mr-2 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
+            </svg>
+            Recent Stock Movements
+          </h2>
+          <a href="{% url 'stock:stockitem_list' %}" class="btn btn-ghost btn-sm">
+            View All
+            <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+          </a>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="table w-full text-sm">
+            <thead class="bg-base-200/50">
+              <tr>
+                <th class="font-semibold">Product</th>
+                <th class="font-semibold">Movement</th>
+                <th class="font-semibold">Quantity</th>
+                <th class="font-semibold">Date</th>
+                <th class="font-semibold">Type</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for movement in recent_movements %}
+              <tr class="hover:bg-base-200/30 transition-colors">
+                <td>
+                  <div class="flex items-center gap-2">
+                    {% if movement.stock_item.product.image %}
+                    <img src="{{ movement.stock_item.product.image.url }}" alt="Product" class="w-8 h-8 rounded object-cover">
+                    {% else %}
+                    <div class="w-8 h-8 bg-base-200 rounded flex items-center justify-center">
+                      <svg class="w-4 h-4 text-base-content/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                      </svg>
+                    </div>
+                    {% endif %}
+                    <span class="font-medium">{{ movement.stock_item.product.name }}</span>
+                  </div>
+                </td>
+                <td>
+                  {% if movement.movement_type == 'IN' %}
+                  <span class="flex items-center text-success">
+                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4"/>
+                    </svg>
+                    Stock In
+                  </span>
+                  {% else %}
+                  <span class="flex items-center text-error">
+                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                    </svg>
+                    Stock Out
+                  </span>
+                  {% endif %}
+                </td>
+                <td class="font-semibold">{{ movement.quantity_changed }}</td>
+                <td class="text-base-content/70">{{ movement.created_at|date:"M d, H:i" }}</td>
+                <td>
+                  <span class="badge badge-outline badge-sm">{{ movement.get_movement_type_display }}</span>
+                </td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="5" class="text-center py-8 text-base-content/60">
+                  <div class="flex flex-col items-center gap-2">
+                    <svg class="w-8 h-8 text-base-content/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                    </svg>
+                    <span>No recent stock movements</span>
+                  </div>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="space-y-6">
+      <!-- Weekly Performance -->
+      <div class="bg-base-100 rounded-lg shadow-sm border border-base-300 p-6">
+        <h3 class="text-lg font-semibold text-base-content mb-4 flex items-center">
+          <svg class="w-5 h-5 mr-2 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2-2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+          </svg>
+          Weekly Summary
+        </h3>
+        
+        <div class="space-y-4">
+          <div class="flex justify-between items-center">
+            <span class="text-base-content/70">Total Sales</span>
+            <span class="font-bold text-lg">{{ sales_last_week_count }}</span>
+          </div>
+          <div class="flex justify-between items-center">
+            <span class="text-base-content/70">Revenue</span>
+            <span class="font-bold text-success">৳ {{ sales_last_week_revenue|floatformat:2 }}</span>
+          </div>
+          <div class="flex justify-between items-center">
+            <span class="text-base-content/70">Avg. per Sale</span>
+            <span class="font-bold text-info" x-text="averagePerSale"></span>
+          </div>
+          
+          <div class="divider my-2"></div>
+          
+          <div class="text-center">
+            <a href="{% url sale_list_url %}" class="btn btn-outline btn-sm w-full">
+              <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+              </svg>
+              View All Sales
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Inventory Alerts -->
+      <div class="bg-base-100 rounded-lg shadow-sm border border-base-300 p-6">
+        <h3 class="text-lg font-semibold text-base-content mb-4 flex items-center">
+          <svg class="w-5 h-5 mr-2 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+          </svg>
+          Inventory Alerts
+        </h3>
+
+        <div class="space-y-3">
+          {% if low_stock_items > 0 %}
+          <div class="alert alert-warning py-3">
+            <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-5 w-5" fill="none" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+            </svg>
+            <div>
+              <div class="font-medium">{{ low_stock_items }} items low on stock</div>
+              <div class="text-sm opacity-70">Reorder recommended</div>
+            </div>
+          </div>
+          {% endif %}
+
+          {% if out_of_stock_items > 0 %}
+          <div class="alert alert-error py-3">
+            <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-5 w-5" fill="none" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <div>
+              <div class="font-medium">{{ out_of_stock_items }} items out of stock</div>
+              <div class="text-sm opacity-70">Immediate attention required</div>
+            </div>
+          </div>
+          {% endif %}
+
+          {% if low_stock_items == 0 and out_of_stock_items == 0 %}
+          <div class="alert alert-success py-3">
+            <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-5 w-5" fill="none" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <div>
+              <div class="font-medium">All stock levels healthy</div>
+              <div class="text-sm opacity-70">No immediate action needed</div>
+            </div>
+          </div>
+          {% endif %}
+
+          <div class="text-center pt-2">
+            <a href="{% url 'stock:stockitem_list' %}" class="btn btn-outline btn-sm w-full">
+              <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+              </svg>
+              Manage Inventory
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- System Status -->
+      <div class="bg-base-100 rounded-lg shadow-sm border border-base-300 p-6">
+        <h3 class="text-lg font-semibold text-base-content mb-4 flex items-center">
+          <svg class="w-5 h-5 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+          </svg>
+          System Status
+        </h3>
+        
+        <div class="space-y-3">
+          <div class="flex justify-between items-center">
+            <span class="text-base-content/70">Database</span>
+            <span class="badge badge-success badge-sm">Online</span>
+          </div>
+          <div class="flex justify-between items-center">
+            <span class="text-base-content/70">Backup Status</span>
+            <span class="badge badge-success badge-sm">Up to date</span>
+          </div>
+          <div class="flex justify-between items-center">
+            <span class="text-base-content/70">Last Backup</span>
+            <span class="text-sm font-medium" x-text="formatDate('{{ "now"|date:"c" }}')"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Actions Sidebar -->
+    <div class="space-y-6">
+      <!-- Quick Action Buttons -->
+      <div class="bg-base-100 rounded-lg shadow-sm border border-base-300 p-6">
+        <h3 class="text-lg font-semibold text-base-content mb-4 flex items-center">
+          <svg class="w-5 h-5 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+          </svg>
+          Quick Actions
+        </h3>
+        
+        <div class="space-y-3">
+          <a href="{% url create_sale_url %}" class="btn btn-primary btn-sm w-full justify-start">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+            </svg>
+            Create Manual Sale
+          </a>
+          
+          <a href="{% url pos_url %}" class="btn btn-secondary btn-sm w-full justify-start">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M12 12h-.01m9.01 0a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            Open PoS System
+          </a>
+          
+          <a href="{% url 'stock:stockitem_list' %}" class="btn btn-accent btn-sm w-full justify-start">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+            </svg>
+            Manage Inventory
+          </a>
+          
+          <a href="{% url 'products:supplier_list' %}" class="btn btn-info btn-sm w-full justify-start">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-4m-5 0H9m0 0H5m0 0H3m0 0h2M9 7h6m-6 4h6m-6 4h6"/>
+            </svg>
+            View Suppliers
+          </a>
+        </div>
+      </div>
+
+      <!-- Today's Goals -->
+      <div class="bg-base-100 rounded-lg shadow-sm border border-base-300 p-6">
+        <h3 class="text-lg font-semibold text-base-content mb-4 flex items-center">
+          <svg class="w-5 h-5 mr-2 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/>
+          </svg>
+          Today's Goals
+        </h3>
+        
+        <div class="space-y-3">
+          <div class="flex items-center gap-2">
+            <input type="checkbox" class="checkbox checkbox-sm" :checked="todaysGoals.sales >= 10">
+            <span class="text-sm" :class="todaysGoals.sales >= 10 ? 'line-through text-success' : ''">
+              Complete 10 sales ({{ sales_today_count }}/10)
+            </span>
+          </div>
+          <div class="flex items-center gap-2">
+            <input type="checkbox" class="checkbox checkbox-sm" :checked="todaysGoals.stockCheck">
+            <span class="text-sm" :class="todaysGoals.stockCheck ? 'line-through text-success' : ''">
+              Review low stock items
+            </span>
+          </div>
+          <div class="flex items-center gap-2">
+            <input type="checkbox" class="checkbox checkbox-sm" :checked="todaysGoals.supplierContact">
+            <span class="text-sm" :class="todaysGoals.supplierContact ? 'line-through text-success' : ''">
+              Contact suppliers for restock
+            </span>
+          </div>
+          
+          <div class="pt-2">
+            <div class="text-xs text-base-content/60 mb-1">Daily Progress</div>
+            <progress class="progress progress-primary w-full" :value="dailyProgress" max="100"></progress>
+            <div class="text-xs text-center mt-1" x-text="dailyProgress + '% Complete'"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Notification Center -->
+      <div class="bg-base-100 rounded-lg shadow-sm border border-base-300 p-6">
+        <h3 class="text-lg font-semibold text-base-content mb-4 flex items-center">
+          <svg class="w-5 h-5 mr-2 text-pink-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5v-5zM4 4h7v7H4V4zm9 0h7v7h-7V4zM4 13h7v7H4v-7z"/>
+          </svg>
+          Notifications
+          <span class="ml-auto badge badge-error badge-sm" x-show="notifications.length > 0" x-text="notifications.length"></span>
+        </h3>
+        
+        <div class="space-y-2 max-h-48 overflow-y-auto">
+          <template x-for="notification in notifications" :key="notification.id">
+            <div class="p-3 bg-base-200/30 rounded-lg text-sm">
+              <div class="flex justify-between items-start gap-2">
+                <div class="flex-1">
+                  <p class="font-medium" x-text="notification.title"></p>
+                  <p class="text-base-content/60 text-xs mt-1" x-text="notification.message"></p>
+                </div>
+                <button @click="dismissNotification(notification.id)" class="btn btn-ghost btn-xs">✕</button>
+              </div>
+              <div class="text-xs text-base-content/50 mt-2" x-text="formatTime(notification.time)"></div>
+            </div>
+          </template>
+          
+          <div x-show="notifications.length === 0" class="text-center py-4 text-base-content/50">
+            <svg class="w-8 h-8 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
+            </svg>
+            <p class="text-sm">No new notifications</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_script %}
+<script>
+function dashboardManager() {
+  return {
+    loading: false,
+    chartPeriod: 'week',
+    
+    todaysGoals: {
+      sales: {{ sales_today_count }},
+      stockCheck: false,
+      supplierContact: false
+    },
+    
+    notifications: [
+      {
+        id: 1,
+        title: 'Low Stock Alert',
+        message: 'Dog Food Premium is running low (3 units remaining)',
+        time: new Date(Date.now() - 10 * 60 * 1000), // 10 minutes ago
+        type: 'warning'
+      },
+      {
+        id: 2,
+        title: 'Daily Sales Target',
+        message: 'You\'re {{ sales_today_count }}/10 towards today\'s sales goal',
+        time: new Date(Date.now() - 30 * 60 * 1000), // 30 minutes ago
+        type: 'info'
+      },
+      {
+        id: 3,
+        title: 'Supplier Payment Due',
+        message: 'Payment to ABC Pet Supplies due in 2 days',
+        time: new Date(Date.now() - 60 * 60 * 1000), // 1 hour ago
+        type: 'warning'
+      }
+    ],
+
+    init() {
+      // Auto-refresh data every 5 minutes
+      setInterval(() => {
+        this.refreshData();
+      }, 5 * 60 * 1000);
+      
+      // Load initial data
+      this.updateGoals();
+    },
+
+    get averagePerSale() {
+      const count = {{ sales_last_week_count }};
+      const revenue = {{ sales_last_week_revenue|default:0 }};
+      if (count === 0) return '৳ 0.00';
+      return '৳ ' + (revenue / count).toFixed(2);
+    },
+
+    get dailyProgress() {
+      let completed = 0;
+      if (this.todaysGoals.sales >= 10) completed++;
+      if (this.todaysGoals.stockCheck) completed++;
+      if (this.todaysGoals.supplierContact) completed++;
+      return Math.round((completed / 3) * 100);
+    },
+
+    updateGoals() {
+      // Update goals based on current metrics
+      if ({{ low_stock_items }} === 0 && {{ out_of_stock_items }} === 0) {
+        this.todaysGoals.stockCheck = true;
+      }
+    },
+
+    formatDate(dateString) {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    },
+
+    formatTime(date) {
+      const now = new Date();
+      const diff = now - date;
+      const minutes = Math.floor(diff / 60000);
+      const hours = Math.floor(minutes / 60);
+      const days = Math.floor(hours / 24);
+
+      if (days > 0) return `${days}d ago`;
+      if (hours > 0) return `${hours}h ago`;
+      if (minutes > 0) return `${minutes}m ago`;
+      return 'Just now';
+    },
+
+    async refreshData() {
+      this.loading = true;
+      
+      // Simulate data refresh
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // In real implementation, this would fetch fresh data from server
+      console.log('Refreshing dashboard data...');
+      
+      this.loading = false;
+    },
+
+    dismissNotification(id) {
+      this.notifications = this.notifications.filter(n => n.id !== id);
+    },
+
+    // Chart period change handler
+    updateChartPeriod(period) {
+      this.chartPeriod = period;
+      // In real implementation, this would fetch new chart data
+      console.log('Updating chart period to:', period);
+    }
+  }
+}
+</script>
+
+<style>
+[x-cloak] { 
+  display: none !important; 
+}
+
+/* Smooth transitions for all interactive elements */
+.transition-all {
+  transition: all 0.3s ease;
+}
+
+/* Custom hover effects for cards */
+.hover\:shadow-md:hover {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+/* Progress bar animation */
+.progress {
+  animation: progress-fill 0.8s ease-out;
+}
+
+@keyframes progress-fill {
+  from {
+    width: 0%;
+  }
+  to {
+    width: 100%;
+  }
+}
+
+/* Notification scroll styling */
+.overflow-y-auto {
+  scrollbar-width: thin;
+  scrollbar-color: theme(colors.base-300) transparent;
+}
+
+.overflow-y-auto::-webkit-scrollbar {
+  width: 4px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb {
+  background-color: theme(colors.base-300);
+  border-radius: 2px;
+}
+
+/* KPI card hover animations */
+.bg-base-100:hover {
+  transform: translateY(-2px);
+}
+
+/* Status badge pulse */
+.badge-success {
+  animation: pulse-success 3s infinite;
+}
+
+@keyframes pulse-success {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+</style>
+{% endblock %}

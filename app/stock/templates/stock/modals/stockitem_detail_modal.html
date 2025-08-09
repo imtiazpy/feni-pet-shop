@@ -1,0 +1,245 @@
+<div class="space-y-6">
+  <!-- Stock Item Header -->
+  <div class="text-center border-b border-gray-200 dark:border-gray-600 pb-4">
+    <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">{{ stock_item.product.name }}</h2>
+    <div class="flex justify-center gap-2">
+      <span class="badge badge-primary badge-outline text-xs">Stock Details</span>
+      {% if stock_item.batch_number %}
+      <span class="badge badge-secondary badge-outline text-xs">{{ stock_item.batch_number }}</span>
+      {% endif %}
+      {% if stock_item.quantity == 0 %}
+      <span class="badge badge-error text-xs">Out of Stock</span>
+      {% elif stock_item.quantity <= 10 %}
+      <span class="badge badge-warning text-xs">Low Stock</span>
+      {% else %}
+      <span class="badge badge-success text-xs">In Stock</span>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Product Information -->
+  <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
+    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
+      <svg class="w-5 h-5 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+      </svg>
+      Product Information
+    </h3>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+      <div class="space-y-1">
+        <p class="font-semibold text-gray-700 dark:text-gray-300">Product Name:</p>
+        <div class="flex items-center gap-3 bg-white dark:bg-gray-700 px-3 py-2 rounded border border-gray-200 dark:border-gray-600">
+          {% if stock_item.product.image %}
+          <img src="{{ stock_item.product.image.url }}" alt="Product" class="w-8 h-8 rounded border border-gray-300 dark:border-gray-600 object-cover">
+          {% endif %}
+          <span class="text-gray-900 dark:text-gray-100">{{ stock_item.product.name }}</span>
+        </div>
+      </div>
+
+      <div class="space-y-1">
+        <p class="font-semibold text-gray-700 dark:text-gray-300">Batch Number:</p>
+        <p class="text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 px-3 py-2 rounded border border-gray-200 dark:border-gray-600 font-mono text-xs">
+          {{ stock_item.batch_number|default:"Not assigned" }}
+        </p>
+      </div>
+
+      <div class="space-y-1">
+        <p class="font-semibold text-gray-700 dark:text-gray-300">Current Quantity:</p>
+        <p class="bg-white dark:bg-gray-700 px-3 py-2 rounded border border-gray-200 dark:border-gray-600">
+          <span class="font-bold text-lg {% if stock_item.quantity == 0 %}text-red-600 dark:text-red-400{% elif stock_item.quantity <= 10 %}text-yellow-600 dark:text-yellow-400{% else %}text-green-600 dark:text-green-400{% endif %}">
+            {{ stock_item.quantity }}
+          </span>
+          <span class="text-gray-500 dark:text-gray-400 text-sm ml-1">units</span>
+        </p>
+      </div>
+
+      <div class="space-y-1">
+        <p class="font-semibold text-gray-700 dark:text-gray-300">Stock Status:</p>
+        <div class="bg-white dark:bg-gray-700 px-3 py-2 rounded border border-gray-200 dark:border-gray-600">
+          {% if stock_item.quantity == 0 %}
+          <span class="badge badge-error badge-sm">Out of Stock</span>
+          {% elif stock_item.quantity <= 10 %}
+          <span class="badge badge-warning badge-sm">Low Stock</span>
+          {% elif stock_item.expiration_date and stock_item.expiration_date|date:'Y-m-d' < today|date:'Y-m-d' %}
+          <span class="badge badge-error badge-sm">Expired</span>
+          {% elif stock_item.expiration_date and stock_item.expiration_date|date:'Y-m-d' <= future_30_days|date:'Y-m-d' %}
+          <span class="badge badge-warning badge-sm">Expiring Soon</span>
+          {% else %}
+          <span class="badge badge-success badge-sm">In Stock</span>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pricing Information -->
+  <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
+    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
+      <svg class="w-5 h-5 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+      </svg>
+      Pricing Information
+    </h3>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+      <div class="space-y-1">
+        <p class="font-semibold text-gray-700 dark:text-gray-300">Purchase Price:</p>
+        <p class="text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 px-3 py-2 rounded border border-gray-200 dark:border-gray-600">
+          {% if stock_item.purchase_price %}
+          <span class="font-semibold text-orange-600 dark:text-orange-400">৳ {{ stock_item.purchase_price|floatformat:2 }}</span>
+          {% else %}
+          <span class="text-gray-500 dark:text-gray-400">Not specified</span>
+          {% endif %}
+        </p>
+      </div>
+
+      <div class="space-y-1">
+        <p class="font-semibold text-gray-700 dark:text-gray-300">Sale Price:</p>
+        <p class="text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 px-3 py-2 rounded border border-gray-200 dark:border-gray-600">
+          <span class="font-semibold text-green-600 dark:text-green-400">৳ {{ stock_item.sale_price|floatformat:2 }}</span>
+        </p>
+      </div>
+
+      {% if stock_item.purchase_price %}
+      <div class="space-y-1">
+        <p class="font-semibold text-gray-700 dark:text-gray-300">Profit Margin:</p>
+        <p class="text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 px-3 py-2 rounded border border-gray-200 dark:border-gray-600">
+          {% widthratio stock_item.sale_price|add:stock_item.purchase_price|add:"-"|add:stock_item.purchase_price stock_item.purchase_price 100 as margin %}
+          <span class="font-semibold {% if margin > 50 %}text-green-600 dark:text-green-400{% elif margin > 20 %}text-blue-600 dark:text-blue-400{% else %}text-yellow-600 dark:text-yellow-400{% endif %}">
+            {{ margin|floatformat:1 }}%
+          </span>
+        </p>
+      </div>
+
+      <div class="space-y-1">
+        <p class="font-semibold text-gray-700 dark:text-gray-300">Total Value:</p>
+        <p class="text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 px-3 py-2 rounded border border-gray-200 dark:border-gray-600">
+          {% widthratio stock_item.sale_price stock_item.quantity 1 as total_value %}
+          <span class="font-semibold text-blue-600 dark:text-blue-400">৳ {{ total_value|floatformat:2 }}</span>
+        </p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Location & Supplier Information -->
+  <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
+    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
+      <svg class="w-5 h-5 mr-2 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+      </svg>
+      Location & Supplier
+    </h3>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+      <div class="space-y-1">
+        <p class="font-semibold text-gray-700 dark:text-gray-300">Stock Location:</p>
+        <p class="text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 px-3 py-2 rounded border border-gray-200 dark:border-gray-600">
+          {% if stock_item.stock_location %}
+          <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200">
+            {{ stock_item.stock_location.name }}
+          </span>
+          {% else %}
+          <span class="text-gray-500 dark:text-gray-400">No location assigned</span>
+          {% endif %}
+        </p>
+      </div>
+
+      <div class="space-y-1">
+        <p class="font-semibold text-gray-700 dark:text-gray-300">Supplier:</p>
+        <p class="text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 px-3 py-2 rounded border border-gray-200 dark:border-gray-600">
+          {% if stock_item.supplier %}
+          <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200">
+            {{ stock_item.supplier.name }}
+          </span>
+          {% else %}
+          <span class="text-gray-500 dark:text-gray-400">No supplier assigned</span>
+          {% endif %}
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Expiration & Tracking Information -->
+  <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
+    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
+      <svg class="w-5 h-5 mr-2 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+      </svg>
+      Tracking Information
+    </h3>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+      <div class="space-y-1">
+        <p class="font-semibold text-gray-700 dark:text-gray-300">Expiration Date:</p>
+        <p class="text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 px-3 py-2 rounded border border-gray-200 dark:border-gray-600">
+          {% if stock_item.expiration_date %}
+          <span class="font-mono text-xs {% if stock_item.expiration_date|date:'Y-m-d' < today|date:'Y-m-d' %}text-red-600 dark:text-red-400{% elif stock_item.expiration_date|date:'Y-m-d' <= future_30_days|date:'Y-m-d' %}text-yellow-600 dark:text-yellow-400{% else %}text-green-600 dark:text-green-400{% endif %}">
+            {{ stock_item.expiration_date|date:"F d, Y" }}
+          </span>
+          {% else %}
+          <span class="text-gray-500 dark:text-gray-400">No expiration date</span>
+          {% endif %}
+        </p>
+      </div>
+
+      <div class="space-y-1">
+        <p class="font-semibold text-gray-700 dark:text-gray-300">Created By:</p>
+        <p class="text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 px-3 py-2 rounded border border-gray-200 dark:border-gray-600">
+          {% if stock_item.created_by %}
+          <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200">
+            {{ stock_item.created_by.get_full_name|default:stock_item.created_by.username }}
+          </span>
+          {% else %}
+          <span class="text-gray-500 dark:text-gray-400">System</span>
+          {% endif %}
+        </p>
+      </div>
+
+      <div class="space-y-1">
+        <p class="font-semibold text-gray-700 dark:text-gray-300">Created Date:</p>
+        <p class="text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 px-3 py-2 rounded border border-gray-200 dark:border-gray-600 font-mono text-xs">
+          {{ stock_item.created_at|date:"F d, Y g:i A" }}
+        </p>
+      </div>
+
+      <div class="space-y-1">
+        <p class="font-semibold text-gray-700 dark:text-gray-300">Last Updated:</p>
+        <p class="text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 px-3 py-2 rounded border border-gray-200 dark:border-gray-600 font-mono text-xs">
+          {{ stock_item.updated_at|date:"F d, Y g:i A" }}
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Action Buttons -->
+  <div class="flex gap-3 pt-4 border-t border-gray-200 dark:border-gray-600">
+    {% if request.user.role == 'admin' or request.user.role == 'inventory_manager' %}
+    <button
+      class="btn btn-primary flex-1 bg-blue-600 hover:bg-blue-700 border-blue-600 hover:border-blue-700 text-white"
+      hx-get="{% url 'stock:stockitem_update' stock_item.id %}" hx-target="#stockModalContent" hx-swap="innerHTML">
+      <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+      </svg>
+      Edit Stock Item
+    </button>
+    <button
+      disabled
+      class="btn btn-accent flex-1 bg-purple-600 hover:bg-purple-700 border-purple-600 hover:border-purple-700 text-white"
+      hx-get="{% url 'stock:stockitem_adjust' stock_item.id %}" hx-target="#stockModalContent" hx-swap="innerHTML">
+      <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m0 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75" />
+      </svg>
+      Adjust Quantity
+    </button>
+    {% endif %}
+    <button type="button" onclick="stockModal.close()"
+      class="btn btn-ghost flex-1 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600">
+      Close
+    </button>
+  </div>
+</div>

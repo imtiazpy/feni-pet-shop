@@ -1,0 +1,172 @@
+<div class="space-y-6" data-delete-supplier-modal>
+  <!-- Warning Header -->
+  <div class="text-center border-b border-red-200 dark:border-red-800 pb-4">
+    <div class="flex justify-center mb-3">
+      <div class="w-16 h-16 bg-red-100 dark:bg-red-900 rounded-full flex items-center justify-center">
+        <svg class="w-8 h-8 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+        </svg>
+      </div>
+    </div>
+    <h3 class="text-xl font-bold text-red-600 dark:text-red-400 mb-2">Confirm Delete</h3>
+    <p class="text-sm text-gray-600 dark:text-gray-400">This action is permanent and cannot be undone</p>
+  </div>
+
+  <!-- Supplier Information -->
+  <div class="bg-red-50 dark:bg-red-900/20 rounded-lg p-4 border border-red-200 dark:border-red-800">
+    <div class="flex items-start gap-4">
+      <div class="flex-shrink-0 w-16 h-16 bg-red-100 dark:bg-red-800 rounded-lg border-2 border-red-200 dark:border-red-700 flex items-center justify-center">
+        <svg class="w-8 h-8 text-red-400 dark:text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+        </svg>
+      </div>
+      
+      <div class="flex-1 min-w-0">
+        <h4 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">{{ supplier.name }}</h4>
+        <div class="grid grid-cols-1 gap-2 text-sm">
+          {% if supplier.email %}
+          <div>
+            <span class="text-gray-500 dark:text-gray-400">Email:</span>
+            <span class="text-gray-700 dark:text-gray-300">{{ supplier.email }}</span>
+          </div>
+          {% endif %}
+          {% if supplier.phone %}
+          <div>
+            <span class="text-gray-500 dark:text-gray-400">Phone:</span>
+            <span class="text-gray-700 dark:text-gray-300">{{ supplier.phone }}</span>
+          </div>
+          {% endif %}
+          <div>
+            <span class="text-gray-500 dark:text-gray-400">Products supplied:</span>
+            <span class="font-semibold text-gray-700 dark:text-gray-300">{{ supplier.products.count }}</span>
+          </div>
+          {% if supplier.description %}
+          <div class="col-span-full mt-2">
+            <span class="text-gray-500 dark:text-gray-400">Description:</span>
+            <p class="text-gray-700 dark:text-gray-300 text-xs mt-1 line-clamp-2">{{ supplier.description }}</p>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Impact Warning -->
+  <div class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+    <div class="flex items-start gap-3">
+      <svg class="w-5 h-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+      </svg>
+      <div class="flex-1">
+        <h5 class="font-semibold text-yellow-800 dark:text-yellow-200 mb-1">Warning</h5>
+        <p class="text-sm text-yellow-700 dark:text-yellow-300 mb-2">
+          Deleting this supplier will permanently remove it and affect the following:
+        </p>
+        <ul class="text-sm text-yellow-700 dark:text-yellow-300 space-y-1">
+          {% if supplier.products.count > 0 %}
+          <li class="flex items-center">
+            <svg class="w-3 h-3 mr-2" fill="currentColor" viewBox="0 0 20 20">
+              <circle cx="10" cy="10" r="2"/>
+            </svg>
+            <strong>{{ supplier.products.count }} product{{ supplier.products.count|pluralize }}</strong> will have their supplier information removed (set to null)
+          </li>
+          {% endif %}
+          <li class="flex items-center">
+            <svg class="w-3 h-3 mr-2" fill="currentColor" viewBox="0 0 20 20">
+              <circle cx="10" cy="10" r="2"/>
+            </svg>
+            All supplier contact information and history will be lost
+          </li>
+          <li class="flex items-center">
+            <svg class="w-3 h-3 mr-2" fill="currentColor" viewBox="0 0 20 20">
+              <circle cx="10" cy="10" r="2"/>
+            </svg>
+            Purchase history and supplier-based reports will be affected
+          </li>
+          <li class="flex items-center">
+            <svg class="w-3 h-3 mr-2" fill="currentColor" viewBox="0 0 20 20">
+              <circle cx="10" cy="10" r="2"/>
+            </svg>
+            Supplier performance analytics will be lost
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Products Preview (if any) -->
+  {% if supplier.products.count > 0 and supplier.products.count <= 5 %}
+  <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+    <h5 class="font-semibold text-blue-800 dark:text-blue-200 mb-3 flex items-center">
+      <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+      </svg>
+      Products that will be affected:
+    </h5>
+    <div class="space-y-2">
+      {% for product in supplier.products.all|slice:":5" %}
+      <div class="flex items-center justify-between text-sm bg-white dark:bg-blue-800 p-2 rounded border border-blue-200 dark:border-blue-700">
+        <span class="font-medium text-blue-900 dark:text-blue-100">{{ product.name }}</span>
+        <span class="text-blue-600 dark:text-blue-300">৳ {{ product.sale_price|floatformat:2 }}</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% elif supplier.products.count > 5 %}
+  <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+    <h5 class="font-semibold text-blue-800 dark:text-blue-200 mb-2 flex items-center">
+      <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+      </svg>
+      Too many products to display
+    </h5>
+    <p class="text-sm text-blue-700 dark:text-blue-300">
+      This supplier supplies <strong>{{ supplier.products.count }} products</strong>. All of these products will have their supplier information removed.
+    </p>
+  </div>
+  {% endif %}
+
+  <!-- Confirmation Input -->
+  <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
+    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+      Type <code class="bg-gray-200 dark:bg-gray-700 px-1 py-0.5 rounded text-red-600 dark:text-red-400 font-mono">DELETE</code> to confirm:
+    </label>
+    <input 
+      type="text" 
+      id="supplierConfirmText" 
+      placeholder="Type DELETE to confirm"
+      class="input input-bordered w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 focus:border-red-500 dark:focus:border-red-400"
+      autocomplete="off"
+      spellcheck="false"
+    >
+  </div>
+
+  <!-- Delete Form -->
+  <form method="post" action="{% url 'products:supplier_delete' supplier.pk %}" id="deleteForm">
+    {% csrf_token %}
+    <div class="flex gap-3 pt-4 border-t border-gray-200 dark:border-gray-600">
+      <button 
+        type="button" 
+        onclick="supplierModal.close()" 
+        class="btn btn-ghost flex-1 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600"
+      >
+        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+        Cancel
+      </button>
+      <button 
+        type="submit" 
+        id="supplierDeleteButton"
+        disabled
+        class="btn flex-1 bg-red-600 hover:bg-red-700 border-red-600 hover:border-red-700 text-white disabled:bg-gray-300 dark:disabled:bg-gray-600 disabled:border-gray-300 dark:disabled:border-gray-600 disabled:text-gray-500 dark:disabled:text-gray-400 disabled:cursor-not-allowed"
+      >
+        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+        </svg>
+        Yes, Delete Supplier
+      </button>
+    </div>
+  </form>
+</div>

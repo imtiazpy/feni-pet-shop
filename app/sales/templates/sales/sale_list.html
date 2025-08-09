@@ -1,0 +1,249 @@
+{% extends template_to_extend %} 
+{% load static %} 
+{% block title %}Sale List | Pet IMS{% endblock %}
+
+{% block content %}
+<div class="mb-6 flex justify-between items-center">
+  <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Sale List</h1>
+
+  <div class="flex items-center gap-3">
+    <button class="btn btn-primary btn-sm">
+      Export {% include 'includes/svg/export_icon.html' %}
+    </button>
+  </div>
+</div>
+
+<!-- Filters -->
+<div class="mb-6 bg-base-100 rounded-lg shadow-sm border border-base-300 p-4">
+  <form method="get" class="flex flex-wrap gap-4 items-end">
+    <div class="form-control">
+      <label class="label">
+        <span class="label-text font-medium">Filter by Status</span>
+      </label>
+      <select name="status" class="select select-bordered select-sm w-48 bg-white dark:bg-gray-700">
+        <option value="">All Sales</option>
+        <option value="completed" {% if request.GET.status == 'completed' %}selected{% endif %}>Completed</option>
+        <option value="pending" {% if request.GET.status == 'pending' %}selected{% endif %}>Pending</option>
+        <option value="cancelled" {% if request.GET.status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+        <option value="refunded" {% if request.GET.status == 'refunded' %}selected{% endif %}>Refunded</option>
+      </select>
+    </div>
+
+    <div class="form-control">
+      <label class="label">
+        <span class="label-text font-medium">Date From</span>
+      </label>
+      <input disabled type="date" name="date_from" value="{{ request.GET.date_from }}" 
+             class="input input-bordered input-sm w-48 bg-white dark:bg-gray-700">
+    </div>
+
+    <div class="form-control">
+      <label class="label">
+        <span class="label-text font-medium">Date To</span>
+      </label>
+      <input disabled type="date" name="date_to" value="{{ request.GET.date_to }}" 
+             class="input input-bordered input-sm w-48 bg-white dark:bg-gray-700">
+    </div>
+
+    <div class="form-control">
+      <button type="submit" class="btn btn-neutral btn-sm">
+        <span class="w-4 h-4 flex items-center justify-center">
+          {% include 'includes/svg/search_icon.html' %}
+        </span>
+        Filter
+      </button>
+    </div>
+
+    {% if request.GET.status or request.GET.date_from or request.GET.date_to %}
+    <div class="form-control">
+      <a href="{% url 'sales:sale_list' %}" class="btn btn-ghost btn-sm">
+        Clear Filters
+      </a>
+    </div>
+    {% endif %}
+  </form>
+</div>
+  
+<div class="overflow-x-auto bg-base-100 rounded-lg shadow-lg border border-base-300">
+  <table class="table w-full text-sm">
+    <thead class="bg-base-200/50 border-b border-base-300">
+      <tr class="text-base-content/90">
+        <th class="font-semibold">#</th>
+        <th class="font-semibold">Sale ID</th>
+        <th class="font-semibold">Date & Time</th>
+        <th class="font-semibold">Subtotal</th>
+        <th class="font-semibold">Discount</th>
+        <th class="font-semibold">Final Amount</th>
+        <th class="font-semibold">Status</th>
+        <th class="font-semibold">Created By</th>
+        <th class="font-semibold">Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for sale in sales %}
+      <tr class="hover:bg-base-200 transition-colors duration-200 border-b border-base-300/50 {% cycle 'bg-base-100' 'bg-base-200/20' %}">
+        <td class="text-base-content/80">{{ forloop.counter }}</td>
+        <td class="font-medium text-base-content font-mono">#{{ sale.id|stringformat:"04d" }}</td>
+        <td class="text-base-content">
+          <div class="flex flex-col">
+            <span class="font-medium">{{ sale.created_at|date:"M d, Y" }}</span>
+            <span class="text-xs text-base-content/60">{{ sale.created_at|date:"g:i A" }}</span>
+          </div>
+        </td>
+        <td class="text-info font-semibold">৳ {{ sale.sub_total|floatformat:2 }}</td>
+        <td class="text-base-content">
+          {% if sale.discount_applied %}
+            <div class="flex flex-col">
+              <span class="badge badge-warning badge-xs">Applied</span>
+              <span class="text-xs font-medium text-warning">৳ {{ sale.discount_amount|floatformat:2 }}</span>
+            </div>
+          {% else %}
+            <span class="text-base-content/60">—</span>
+          {% endif %}
+        </td>
+        <td class="text-success font-bold">
+          ৳ {{ sale.total_amount|floatformat:2 }}
+        </td>
+        <td class="text-base-content">
+          {% if sale.status == 'completed' %}
+            <span class="badge badge-success badge-sm">Completed</span>
+          {% elif sale.status == 'pending' %}
+            <span class="badge badge-warning badge-sm">Pending</span>
+          {% elif sale.status == 'cancelled' %}
+            <span class="badge badge-error badge-sm">Cancelled</span>
+          {% elif sale.status == 'refunded' %}
+            <span class="badge badge-info badge-sm">Refunded</span>
+          {% else %}
+            <span class="badge badge-ghost badge-sm">{{ sale.status|title }}</span>
+          {% endif %}
+        </td>
+        <td class="text-base-content">
+          {% if sale.created_by %}
+            <div class="flex items-center gap-2">
+              <div class="avatar placeholder">
+                <div class="bg-neutral text-neutral-content rounded-full w-6 h-6 text-xs">
+                  <span>{{ sale.created_by.first_name.0|default:sale.created_by.username.0|upper }}</span>
+                </div>
+              </div>
+              <span class="text-sm">{{ sale.created_by.get_full_name|default:sale.created_by.username }}</span>
+            </div>
+          {% else %}
+            <span class="text-base-content/60">System</span>
+          {% endif %}
+        </td>
+        <td>
+          <div class="flex gap-1">
+            <div class="tooltip" data-tip="View Details">
+              <a 
+                class="btn btn-xs btn-info btn-outline hover:btn-info" 
+                hx-get="{% url 'sales:sale_detail' sale.id %}" 
+                hx-target="#saleModalContent"
+                hx-swap="innerHTML"
+                onclick="saleModal.showModal()"
+              >
+                <span class="w-4 h-4 flex items-center justify-center">
+                  {% include 'includes/svg/circle_info_icon.html' %}
+                </span>
+              </a>
+            </div>
+            {% if request.user.role == 'admin' or request.user.role == 'cashier' %}
+            {% if sale.status == 'pending' %}
+            <div class="tooltip" data-tip="Complete Sale">
+              <a 
+                class="btn btn-xs btn-success btn-outline hover:btn-success" 
+                hx-post="{% url 'sales:sale_complete' sale.id %}" 
+                hx-target="#saleModalContent"
+                hx-swap="innerHTML"
+                hx-confirm="Are you sure you want to complete this sale?"
+                onclick="saleModal.showModal()"
+              >
+                <span class="w-4 h-4 flex items-center justify-center">
+                  {% include 'includes/svg/check_icon.html' %}
+                </span>
+              </a>
+            </div>
+            {% endif %}
+            {% if sale.status == 'completed' %}
+            <div class="tooltip" data-tip="Print Receipt">
+              <a 
+                disabled
+                class="btn btn-xs btn-accent btn-outline hover:btn-accent" 
+                href="{% url 'sales:sale_receipt' sale.id %}" 
+                target="_blank"
+              >
+                <span class="w-4 h-4 flex items-center justify-center">
+                  {% include 'includes/svg/printer_icon.html' %}
+                </span>
+              </a>
+            </div>
+            {% endif %}
+            {% if sale.status != 'refunded' and sale.status != 'cancelled' %}
+            <div class="tooltip" data-tip="Refund Sale">
+              <a 
+                disabled
+                class="btn btn-xs btn-warning btn-outline hover:btn-warning" 
+                hx-get="{% url 'sales:sale_refund' sale.id %}" 
+                hx-target="#saleModalContent"
+                hx-swap="innerHTML"
+                onclick="saleModal.showModal()"
+              >
+                <span class="w-4 h-4 flex items-center justify-center">
+                  {% include 'includes/svg/back_arrow.html' %}
+                </span>
+              </a>
+            </div>
+            {% endif %}
+            {% endif %}
+          </div>
+        </td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="9" class="text-center text-base-content/60 py-8">
+          <div class="flex flex-col items-center gap-2">
+            <div class="w-12 h-12 rounded-full bg-base-200 flex items-center justify-center">
+              <span class="text-base-content/40 text-xl">💰</span>
+            </div>
+            <span class="font-medium">No sales found</span>
+            <span class="text-sm text-base-content/40">Start by creating your first sale</span>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- Pagination -->
+{% if is_paginated %}
+<div class="mt-6 flex justify-center">
+  <div class="join bg-base-100 shadow-sm rounded-lg border border-base-300">
+    {% if page_obj.has_previous %}
+      <a href="?page=1{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}" class="join-item btn btn-sm btn-ghost hover:bg-base-200">First</a>
+      <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}" class="join-item btn btn-sm btn-ghost hover:bg-base-200">‹ Prev</a>
+    {% endif %}
+    <span class="join-item btn btn-sm btn-active">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}
+      <a href="?page={{ page_obj.next_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}" class="join-item btn btn-sm btn-ghost hover:bg-base-200">Next ›</a>
+      <a href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}" class="join-item btn btn-sm btn-ghost hover:bg-base-200">Last</a>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+
+{% comment %} Stock create/update/detail/adjust Modal {% endcomment %}
+
+<dialog id="saleModal" class="modal">
+  <div class="modal-box max-w-4xl bg-white dark:bg-gray-700 border border-base-300">
+    <form method="dialog">
+      <button class="btn btn-sm btn-circle btn-ghost absolute right-3 top-3 hover:bg-base-200">✕</button>
+    </form>
+    <div id="saleModalContent" class="mt-4">
+      <div class="flex items-center justify-center py-8">
+        <span class="loading loading-spinner loading-md text-primary"></span>
+      </div>
+    </div>
+  </div>
+</dialog>
+
+{% endblock %}

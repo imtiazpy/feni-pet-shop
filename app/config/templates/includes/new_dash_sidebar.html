@@ -1,0 +1,296 @@
+<aside
+  class="fixed left-0 top-16 h-[calc(100vh-4rem)] z-40 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transition-all duration-300 flex flex-col transform lg:translate-x-0"
+  :class="sidebarOpen ? 'w-64 translate-x-0' : 'w-64 -translate-x-full lg:w-16 lg:translate-x-0'">
+  <!-- Logo Section (Fixed) -->
+  <div class="p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+    <div class="flex items-center space-x-3">
+      <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center flex-shrink-0">
+        {% include 'includes/svg/paws_icon_alt.html' %}
+      </div>
+      <span x-show="sidebarOpen" x-transition:enter="transition-opacity duration-300"
+        x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+        x-transition:leave="transition-opacity duration-300" x-transition:leave-start="opacity-100"
+        x-transition:leave-end="opacity-0" class="text-xl font-bold text-gray-800 dark:text-white">
+        imPoS
+      </span>
+    </div>
+  </div>
+
+  <!-- Navigation Menu (Scrollable) -->
+  <nav class="flex-1 overflow-y-auto scrollbar-hide p-2">
+    <div class="space-y-2">
+      <!-- Dashboard -->
+      <div>
+        <a 
+          @click="setActivePage('dashboard')"
+          hx-get="{% url 'dashboard:dashboard' %}"
+          hx-target="#mainContent"
+          hx-push-url="true"
+          class="w-full flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors group cursor-pointer"
+          :class="currentPage === 'dashboard' ? 'bg-primary text-white' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'">
+          {% include 'includes/svg/grid_icon.html' %}
+          <span x-show="sidebarOpen" x-transition:enter="transition-opacity duration-300 delay-100"
+            x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+            x-transition:leave="transition-opacity duration-150" x-transition:leave-start="opacity-100"
+            x-transition:leave-end="opacity-0" class="font-medium">
+            Dashboard
+          </span>
+        </a>
+      </div>
+
+      <!-- Inventory Management -->
+      <div>
+        <button @click="toggleMenu('inventory')"
+          class="w-full flex items-center justify-between px-3 py-2 rounded-lg transition-colors text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+          <div class="flex items-center space-x-3">
+            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+            </svg>
+            <span x-show="sidebarOpen" x-transition:enter="transition-opacity duration-300 delay-100"
+              x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+              x-transition:leave="transition-opacity duration-150" x-transition:leave-start="opacity-100"
+              x-transition:leave-end="opacity-0" class="font-medium">
+              Inventory
+            </span>
+          </div>
+          <svg x-show="sidebarOpen" class="w-4 h-4 transition-transform duration-200"
+            :class="openMenus.inventory ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+          </svg>
+        </button>
+
+        <!-- Submenu -->
+        <div x-show="openMenus.inventory && sidebarOpen" x-transition:enter="transition-all duration-200"
+          x-transition:enter-start="opacity-0 max-h-0" x-transition:enter-end="opacity-100 max-h-40"
+          x-transition:leave="transition-all duration-200" x-transition:leave-start="opacity-100 max-h-40"
+          x-transition:leave-end="opacity-0 max-h-0" class="ml-8 mt-2 space-y-1 overflow-hidden">
+          <a 
+            @click="setActivePage('products')"
+            hx-get="{% url 'products:product_list' %}"
+            hx-target="#mainContent"
+            hx-push-url="true"
+            class="block w-full cursor-pointer text-left px-3 py-2 my-2 text-sm rounded-lg transition-colors"
+            :class="currentPage === 'products' ? 'bg-primary/10 text-primary' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'">
+            All Products
+          </a>
+          <a 
+            @click="setActivePage('products/categories')"
+            hx-get="{% url 'products:category_list' %}"
+            hx-target="#mainContent"
+            hx-push-url="true"
+            class="block w-full cursor-pointer text-left px-3 py-2 text-sm rounded-lg transition-colors"
+            :class="currentPage === 'products/categories' ? 'bg-primary/10 text-primary' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'">
+            Categories
+          </a>
+          <a 
+            @click="setActivePage('stocks')"
+            hx-get="{% url 'stock:stockitem_list' %}"
+            hx-target="#mainContent"
+            hx-push-url="true"
+            class="block w-full cursor-pointer text-left px-3 py-2 text-sm rounded-lg transition-colors"
+            :class="currentPage === 'stocks' ? 'bg-primary/10 text-primary' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'">
+            Stocks
+          </a>
+          <a 
+            @click="setActivePage('low-stock')"
+            class="block w-full cursor-pointer text-left px-3 py-2 text-sm rounded-lg transition-colors"
+            :class="currentPage === 'low-stock' ? 'bg-primary/10 text-primary' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'">
+            Low Stock Alerts
+          </a>
+        </div>
+      </div>
+
+      <!-- Sales Management -->
+      <div>
+        <button @click="toggleMenu('sales')"
+          class="w-full flex items-center justify-between px-3 py-2 rounded-lg transition-colors text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+          <div class="flex items-center space-x-3">
+            {% include 'includes/svg/sales_chart_icon.html' %}
+            <span x-show="sidebarOpen" x-transition:enter="transition-opacity duration-300 delay-100"
+              x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+              x-transition:leave="transition-opacity duration-150" x-transition:leave-start="opacity-100"
+              x-transition:leave-end="opacity-0" class="font-medium">
+              Sales
+            </span>
+          </div>
+          <svg x-show="sidebarOpen" class="w-4 h-4 transition-transform duration-200"
+            :class="openMenus.inventory ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+          </svg>
+        </button>
+
+        <!-- Submenu -->
+        <div x-show="openMenus.sales && sidebarOpen" x-transition:enter="transition-all duration-200"
+          x-transition:enter-start="opacity-0 max-h-0" x-transition:enter-end="opacity-100 max-h-40"
+          x-transition:leave="transition-all duration-200" x-transition:leave-start="opacity-100 max-h-40"
+          x-transition:leave-end="opacity-0 max-h-0" class="ml-8 mt-2 space-y-1 overflow-hidden">
+          <a 
+            @click="setActivePage('sales/create')"
+            hx-get="{% url 'sales:sale_create' %}"
+            hx-target="#mainContent"
+            hx-push-url="true"
+            class="block w-full cursor-pointer text-left px-3 py-2 my-2 text-sm rounded-lg transition-colors"
+            :class="currentPage === 'sales/create' ? 'bg-primary/10 text-primary' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'">
+            Create sales
+          </a>
+          <a 
+            @click="setActivePage('sales')"
+            hx-get="{% url 'sales:sale_list' %}"
+            hx-target="#mainContent"
+            hx-push-url="true"
+            class="block w-full cursor-pointer text-left px-3 py-2 text-sm rounded-lg transition-colors"
+            :class="currentPage === 'sales' ? 'bg-primary/10 text-primary' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'">
+            Sales list
+          </a>
+        </div>
+      </div>
+
+      <!-- Orders -->
+      <div>
+        <button @click="toggleMenu('orders')"
+          class="w-full flex items-center justify-between px-3 py-2 rounded-lg transition-colors text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+          <div class="flex items-center space-x-3">
+            {% include 'includes/svg/package_icon.html' %}
+            <span x-show="sidebarOpen" x-transition:enter="transition-opacity duration-300 delay-100"
+              x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+              x-transition:leave="transition-opacity duration-150" x-transition:leave-start="opacity-100"
+              x-transition:leave-end="opacity-0" class="font-medium">
+              Orders
+            </span>
+          </div>
+          <svg x-show="sidebarOpen" class="w-4 h-4 transition-transform duration-200"
+            :class="openMenus.orders ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+          </svg>
+        </button>
+
+        <!-- Submenu -->
+        <div x-show="openMenus.orders && sidebarOpen" x-transition:enter="transition-all duration-200"
+          x-transition:enter-start="opacity-0 max-h-0" x-transition:enter-end="opacity-100 max-h-40"
+          x-transition:leave="transition-all duration-200" x-transition:leave-start="opacity-100 max-h-40"
+          x-transition:leave-end="opacity-0 max-h-0" class="ml-8 mt-2 space-y-1 overflow-hidden">
+          <button @click="setActivePage('all-orders')"
+            class="w-full text-left px-3 py-2 text-sm rounded-lg transition-colors"
+            :class="currentPage === 'all-orders' ? 'bg-primary/10 text-primary' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'">All
+            Orders</button>
+          <button @click="setActivePage('purchase-orders')"
+            class="w-full text-left px-3 py-2 text-sm rounded-lg transition-colors"
+            :class="currentPage === 'purchase-orders' ? 'bg-primary/10 text-primary' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'">Purchase
+            Orders</button>
+          <button @click="setActivePage('sales-orders')"
+            class="w-full text-left px-3 py-2 text-sm rounded-lg transition-colors"
+            :class="currentPage === 'sales-orders' ? 'bg-primary/10 text-primary' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'">Sales
+            Orders</button>
+        </div>
+      </div>
+
+      <!-- Suppliers -->
+      <div>
+        <a 
+          @click="setActivePage('products/suppliers')"
+          hx-get="{% url 'products:supplier_list' %}"
+          hx-target="#mainContent"
+          hx-push-url="true"
+          class="w-full flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors group cursor-pointer"
+          :class="currentPage === 'products/suppliers' ? 'bg-primary text-white' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'"
+        >
+          <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z">
+            </path>
+          </svg>
+          <span x-show="sidebarOpen" x-transition:enter="transition-opacity duration-300 delay-100"
+            x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+            x-transition:leave="transition-opacity duration-150" x-transition:leave-start="opacity-100"
+            x-transition:leave-end="opacity-0" class="font-medium">
+            Suppliers
+          </span>
+        </a>
+      </div>
+
+      <!-- Customers -->
+      <div>
+        <button @click="setActivePage('customers')"
+          class="w-full flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors group"
+          :class="currentPage === 'customers' ? 'bg-primary text-white' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'">
+          {% include 'includes/svg/customers_icon.html' %}
+          <span x-show="sidebarOpen" x-transition:enter="transition-opacity duration-300 delay-100"
+            x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+            x-transition:leave="transition-opacity duration-150" x-transition:leave-start="opacity-100"
+            x-transition:leave-end="opacity-0" class="font-medium">
+            Customers
+          </span>
+        </button>
+      </div>
+
+      <!-- Reports -->
+      <div>
+        <button @click="toggleMenu('reports')"
+          class="w-full flex items-center justify-between px-3 py-2 rounded-lg transition-colors text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+          <div class="flex items-center space-x-3">
+            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
+              </path>
+            </svg>
+            <span x-show="sidebarOpen" x-transition:enter="transition-opacity duration-300 delay-100"
+              x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+              x-transition:leave="transition-opacity duration-150" x-transition:leave-start="opacity-100"
+              x-transition:leave-end="opacity-0" class="font-medium">
+              Reports
+            </span>
+          </div>
+          <svg x-show="sidebarOpen" class="w-4 h-4 transition-transform duration-200"
+            :class="openMenus.reports ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+          </svg>
+        </button>
+
+        <!-- Submenu -->
+        <div x-show="openMenus.reports && sidebarOpen" x-transition:enter="transition-all duration-200"
+          x-transition:enter-start="opacity-0 max-h-0" x-transition:enter-end="opacity-100 max-h-48"
+          x-transition:leave="transition-all duration-200" x-transition:leave-start="opacity-100 max-h-48"
+          x-transition:leave-end="opacity-0 max-h-0" class="ml-8 mt-2 space-y-1 overflow-hidden">
+          <button @click="setActivePage('inventory-report')"
+            class="w-full text-left px-3 py-2 text-sm rounded-lg transition-colors"
+            :class="currentPage === 'inventory-report' ? 'bg-primary/10 text-primary' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'">Inventory
+            Report</button>
+          <button @click="setActivePage('sales-report')"
+            class="w-full text-left px-3 py-2 text-sm rounded-lg transition-colors"
+            :class="currentPage === 'sales-report' ? 'bg-primary/10 text-primary' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'">Sales
+            Report</button>
+          <button @click="setActivePage('purchase-report')"
+            class="w-full text-left px-3 py-2 text-sm rounded-lg transition-colors"
+            :class="currentPage === 'purchase-report' ? 'bg-primary/10 text-primary' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'">Purchase
+            Report</button>
+          <button @click="setActivePage('profit-loss')"
+            class="w-full text-left px-3 py-2 text-sm rounded-lg transition-colors"
+            :class="currentPage === 'profit-loss' ? 'bg-primary/10 text-primary' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'">Profit
+            & Loss</button>
+        </div>
+      </div>
+
+      <!-- Settings -->
+      <div>
+        <button @click="setActivePage('settings')"
+          class="w-full flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors group"
+          :class="currentPage === 'settings' ? 'bg-primary text-white' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'">
+          <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z">
+            </path>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z">
+            </path>
+          </svg>
+          <span x-show="sidebarOpen" x-transition:enter="transition-opacity duration-300 delay-100"
+            x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+            x-transition:leave="transition-opacity duration-150" x-transition:leave-start="opacity-100"
+            x-transition:leave-end="opacity-0" class="font-medium">
+            Settings
+          </span>
+        </button>
+      </div>
+    </div>
+  </nav>
+</aside>

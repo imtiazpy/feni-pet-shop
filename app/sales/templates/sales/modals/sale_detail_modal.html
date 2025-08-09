@@ -1,0 +1,264 @@
+<div class="space-y-6">
+  <!-- Sale Header -->
+  <div class="text-center border-b border-gray-200 dark:border-gray-600 pb-4">
+    <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">Sale #{{ sale.id|stringformat:"04d" }}</h2>
+    <div class="flex justify-center gap-2">
+      <span class="badge badge-primary badge-outline text-xs">Sale Details</span>
+      {% if sale.status == 'completed' %}
+      <span class="badge badge-success text-xs">Completed</span>
+      {% elif sale.status == 'pending' %}
+      <span class="badge badge-warning text-xs">Pending</span>
+      {% elif sale.status == 'cancelled' %}
+      <span class="badge badge-error text-xs">Cancelled</span>
+      {% elif sale.status == 'refunded' %}
+      <span class="badge badge-info text-xs">Refunded</span>
+      {% endif %}
+      {% if sale.discount_applied %}
+      <span class="badge badge-secondary badge-outline text-xs">Discount Applied</span>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Sale Information -->
+  <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
+    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
+      <svg class="w-5 h-5 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+      </svg>
+      Sale Information
+    </h3>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+      <div class="space-y-1">
+        <p class="font-semibold text-gray-700 dark:text-gray-300">Sale ID:</p>
+        <p class="text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 px-3 py-2 rounded border border-gray-200 dark:border-gray-600 font-mono text-xs">
+          #{{ sale.id|stringformat:"04d" }}
+        </p>
+      </div>
+
+      <div class="space-y-1">
+        <p class="font-semibold text-gray-700 dark:text-gray-300">Status:</p>
+        <div class="bg-white dark:bg-gray-700 px-3 py-2 rounded border border-gray-200 dark:border-gray-600">
+          {% if sale.status == 'completed' %}
+          <span class="badge badge-success badge-sm">Completed</span>
+          {% elif sale.status == 'pending' %}
+          <span class="badge badge-warning badge-sm">Pending</span>
+          {% elif sale.status == 'cancelled' %}
+          <span class="badge badge-error badge-sm">Cancelled</span>
+          {% elif sale.status == 'refunded' %}
+          <span class="badge badge-info badge-sm">Refunded</span>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="space-y-1">
+        <p class="font-semibold text-gray-700 dark:text-gray-300">Sale Date:</p>
+        <p class="text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 px-3 py-2 rounded border border-gray-200 dark:border-gray-600 font-mono text-xs">
+          {{ sale.created_at|date:"F d, Y g:i A" }}
+        </p>
+      </div>
+
+      <div class="space-y-1">
+        <p class="font-semibold text-gray-700 dark:text-gray-300">Created By:</p>
+        <p class="text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 px-3 py-2 rounded border border-gray-200 dark:border-gray-600">
+          {% if sale.created_by %}
+          <div class="flex items-center gap-2">
+            <div class="avatar placeholder">
+              <div class="bg-neutral text-neutral-content rounded-full w-6 h-6 text-xs">
+                <span>{{ sale.created_by.first_name.0|default:sale.created_by.username.0|upper }}</span>
+              </div>
+            </div>
+            <span class="text-sm">{{ sale.created_by.get_full_name|default:sale.created_by.username }}</span>
+          </div>
+          {% else %}
+          <span class="text-gray-500 dark:text-gray-400">System</span>
+          {% endif %}
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sale Items -->
+  <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
+    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
+      <svg class="w-5 h-5 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+      </svg>
+      Sale Items ({{ sale.sale_items.count }} item{{ sale.sale_items.count|pluralize }})
+    </h3>
+
+    <div class="overflow-x-auto">
+      <table class="table w-full text-sm">
+        <thead class="bg-base-200/50 border-b border-base-300">
+          <tr class="text-base-content/90">
+            <th class="font-semibold">#</th>
+            <th class="font-semibold">Product</th>
+            <th class="font-semibold">Batch</th>
+            <th class="font-semibold">Qty</th>
+            <th class="font-semibold">Unit Price</th>
+            <th class="font-semibold">Line Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in sale.sale_items.all %}
+          <tr class="hover:bg-base-200 transition-colors duration-200 border-b border-base-300/50">
+            <td class="text-base-content/80">{{ forloop.counter }}</td>
+            <td class="text-base-content">
+              <div class="flex items-center gap-3">
+                {% if item.product.image %}
+                <img src="{{ item.product.image.url }}" alt="Product" class="w-8 h-8 rounded border border-gray-300 dark:border-gray-600 object-cover">
+                {% else %}
+                <div class="w-8 h-8 rounded bg-gray-200 dark:bg-gray-600 flex items-center justify-center">
+                  <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                  </svg>
+                </div>
+                {% endif %}
+                <span class="font-medium">{{ item.product.name }}</span>
+              </div>
+            </td>
+            <td class="text-base-content font-mono text-xs">
+              {% if item.stock_item and item.stock_item.batch_number %}
+                {{ item.stock_item.batch_number }}
+              {% else %}
+                <span class="text-gray-500 dark:text-gray-400">—</span>
+              {% endif %}
+            </td>
+            <td class="text-base-content font-semibold">{{ item.quantity }}</td>
+            <td class="text-info font-semibold">৳ {{ item.sale_price|floatformat:2 }}</td>
+            <td class="text-success font-bold">৳ {{ item.line_total|floatformat:2 }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="6" class="text-center text-base-content/60 py-4">No items found</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Payment Summary -->
+  <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
+    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
+      <svg class="w-5 h-5 mr-2 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+      </svg>
+      Payment Summary
+    </h3>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+      <div class="space-y-1">
+        <p class="font-semibold text-gray-700 dark:text-gray-300">Subtotal:</p>
+        <p class="text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 px-3 py-2 rounded border border-gray-200 dark:border-gray-600">
+          <span class="font-semibold text-blue-600 dark:text-blue-400">৳ {{ sale.sub_total|floatformat:2 }}</span>
+        </p>
+      </div>
+
+      <div class="space-y-1">
+        <p class="font-semibold text-gray-700 dark:text-gray-300">Discount:</p>
+        <p class="text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 px-3 py-2 rounded border border-gray-200 dark:border-gray-600">
+          {% if sale.discount_applied %}
+          <span class="font-semibold text-orange-600 dark:text-orange-400">৳ {{ sale.discount_amount|floatformat:2 }}</span>
+          {% else %}
+          <span class="text-gray-500 dark:text-gray-400">No discount</span>
+          {% endif %}
+        </p>
+      </div>
+
+      <div class="space-y-1 md:col-span-2">
+        <p class="font-semibold text-gray-700 dark:text-gray-300">Final Amount:</p>
+        <div class="bg-white dark:bg-gray-700 px-3 py-2 rounded border border-gray-200 dark:border-gray-600">
+          <span class="font-bold text-xl text-green-600 dark:text-green-400">
+            {% if sale.discount_applied %}
+              ৳ {{ sale.total_amount|floatformat:2 }}
+            {% else %}
+              ৳ {{ sale.total_amount|floatformat:2 }}
+            {% endif %}
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Additional Information -->
+  {% if sale.notes or sale.updated_at != sale.created_at %}
+  <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
+    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
+      <svg class="w-5 h-5 mr-2 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+      </svg>
+      Additional Information
+    </h3>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+      {% if sale.notes %}
+      <div class="space-y-1 md:col-span-2">
+        <p class="font-semibold text-gray-700 dark:text-gray-300">Notes:</p>
+        <p class="text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 px-3 py-2 rounded border border-gray-200 dark:border-gray-600">
+          {{ sale.notes }}
+        </p>
+      </div>
+      {% endif %}
+
+      {% if sale.updated_at != sale.created_at %}
+      <div class="space-y-1">
+        <p class="font-semibold text-gray-700 dark:text-gray-300">Last Updated:</p>
+        <p class="text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 px-3 py-2 rounded border border-gray-200 dark:border-gray-600 font-mono text-xs">
+          {{ sale.updated_at|date:"F d, Y g:i A" }}
+        </p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Action Buttons -->
+  <div class="flex gap-3 pt-4 border-t border-gray-200 dark:border-gray-600">
+    {% if request.user.role == 'admin' or request.user.role == 'cashier' %}
+      {% if sale.status == 'pending' %}
+      <button
+        class="btn btn-success flex-1 bg-green-600 hover:bg-green-700 border-green-600 hover:border-green-700 text-white"
+        hx-post="{% url 'sales:sale_complete' sale.id %}"
+        hx-target="#saleModalContent"
+        hx-swap="innerHTML"
+        hx-confirm="Are you sure you want to complete this sale?">
+        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+        </svg>
+        Complete Sale
+      </button>
+      {% endif %}
+
+      {% if sale.status == 'completed' %}
+      <a
+        href="{% url 'sales:sale_receipt' sale.id %}"
+        target="_blank"
+        class="btn btn-accent flex-1 bg-purple-600 hover:bg-purple-700 border-purple-600 hover:border-purple-700 text-white">
+        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+        </svg>
+        Print Receipt
+      </a>
+      {% endif %}
+
+      {% if sale.status != 'refunded' and sale.status != 'cancelled' %}
+      <button
+        class="btn btn-warning flex-1 bg-orange-600 hover:bg-orange-700 border-orange-600 hover:border-orange-700 text-white"
+        hx-get="{% url 'sales:sale_refund' sale.id %}"
+        hx-target="#saleModalContent"
+        hx-swap="innerHTML">
+        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/>
+        </svg>
+        Refund Sale
+      </button>
+      {% endif %}
+    {% endif %}
+
+    <button type="button" onclick="saleModal.close()"
+      class="btn btn-ghost flex-1 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600">
+      Close
+    </button>
+  </div>
+</div>

@@ -1,0 +1,186 @@
+<h3 class="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">Add Stock Item</h3>
+<form method="post" action="{% url 'stock:stockitem_create' %}" class="space-y-4">
+  {% csrf_token %}
+
+  <div class="form-control w-full">
+    <label class="label">
+      <span class="label-text font-semibold text-gray-700 dark:text-gray-300">Product <span class="text-red-500">*</span></span>
+    </label>
+    <select 
+      name="product" 
+      class="select select-bordered w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400"
+      required
+    >
+      <option value="" class="text-gray-500 dark:text-gray-400">-- Select Product --</option>
+      {% for product in products %}
+      <option value="{{ product.id }}" class="text-gray-900 dark:text-gray-100">{{ product.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div class="form-control w-full">
+      <label class="label">
+        <span class="label-text font-semibold text-gray-700 dark:text-gray-300">Quantity <span class="text-red-500">*</span></span>
+      </label>
+      <input 
+        name="quantity" 
+        type="number" 
+        min="0"
+        placeholder="e.g. 100" 
+        class="input input-bordered w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 focus:border-blue-500 dark:focus:border-blue-400"
+        required
+      >
+    </div>
+
+    <div class="form-control w-full">
+      <label class="label">
+        <span class="label-text font-semibold text-gray-700 dark:text-gray-300">Batch Number</span>
+      </label>
+      <input 
+        name="batch_number" 
+        type="text" 
+        placeholder="Leave empty for auto-generation" 
+        class="input input-bordered w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 focus:border-blue-500 dark:focus:border-blue-400"
+      >
+      <div class="label">
+        <span class="label-text-alt text-gray-500 dark:text-gray-400">Auto-generated if left empty</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div class="form-control w-full">
+      <label class="label">
+        <span class="label-text font-semibold text-gray-700 dark:text-gray-300">Purchase Price</span>
+      </label>
+      <div class="relative">
+        <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400">৳</span>
+        <input 
+          name="purchase_price" 
+          type="number" 
+          step="0.01" 
+          min="0"
+          placeholder="200.00" 
+          class="input input-bordered w-full pl-8 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 focus:border-blue-500 dark:focus:border-blue-400"
+        >
+      </div>
+    </div>
+
+    <div class="form-control w-full">
+      <label class="label">
+        <span class="label-text font-semibold text-gray-700 dark:text-gray-300">Sale Price <span class="text-red-500">*</span></span>
+      </label>
+      <div class="relative">
+        <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400">৳</span>
+        <input 
+          name="sale_price" 
+          type="number" 
+          step="0.01" 
+          min="0"
+          placeholder="250.00"
+          class="input input-bordered w-full pl-8 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 focus:border-blue-500 dark:focus:border-blue-400" 
+          required
+        >
+      </div>
+    </div>
+  </div>
+
+  <div class="form-control w-full">
+    <label class="label">
+      <span class="label-text font-semibold text-gray-700 dark:text-gray-300">Expiration Date</span>
+    </label>
+    <input 
+      name="expiration_date" 
+      type="date" 
+      class="input input-bordered w-full bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400"
+    >
+    <div class="label">
+      <span class="label-text-alt text-gray-500 dark:text-gray-400">Leave empty if product doesn't expire</span>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div class="form-control w-full">
+      <label class="label">
+        <span class="label-text font-semibold text-gray-700 dark:text-gray-300">Stock Location</span>
+      </label>
+      <select 
+        name="stock_location" 
+        class="select select-bordered w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400"
+      >
+        <option value="" class="text-gray-500 dark:text-gray-400">-- Select Location --</option>
+        {% for location in locations %}
+        <option value="{{ location.id }}" class="text-gray-900 dark:text-gray-100">{{ location.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="form-control w-full">
+      <label class="label">
+        <span class="label-text font-semibold text-gray-700 dark:text-gray-300">Supplier</span>
+      </label>
+      <select 
+        name="supplier" 
+        class="select select-bordered w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400"
+      >
+        <option value="" class="text-gray-500 dark:text-gray-400">-- Select Supplier --</option>
+        {% for supplier in suppliers %}
+        <option value="{{ supplier.id }}" class="text-gray-900 dark:text-gray-100">{{ supplier.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+  </div>
+  <div class="form-control w-full">
+    <label class="label">
+      <span class="label-text font-semibold text-gray-700 dark:text-gray-300">Notes</span>
+    </label>
+    <input 
+      name="notes" 
+      type="text" 
+      class="input input-bordered w-full bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400"
+    >
+    <div class="label">
+      <span class="label-text-alt text-gray-500 dark:text-gray-400">Add notes for Stock Item Tracking</span>
+    </div>
+  </div>
+
+  <!-- Additional Info Section -->
+  <div class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
+    <div class="flex items-start gap-3">
+      <svg class="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+      </svg>
+      <div class="flex-1">
+        <h5 class="font-semibold text-blue-800 dark:text-blue-200 mb-1">Stock Information</h5>
+        <ul class="text-sm text-blue-700 dark:text-blue-300 space-y-1">
+          <li>• Each stock item represents a specific batch of a product</li>
+          <li>• Batch numbers help track inventory and manage expiration dates</li>
+          <li>• Purchase price is optional but recommended for cost tracking</li>
+          <li>• Sale price can override the product's default sale price</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-control mt-6 pt-4 border-t border-gray-200 dark:border-gray-600">
+    <div class="flex gap-3">
+      <button 
+        type="button" 
+        onclick="stockModal.close()" 
+        class="btn btn-ghost flex-1 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600"
+      >
+        Cancel
+      </button>
+      <button 
+        type="submit" 
+        class="btn btn-primary flex-1 bg-blue-600 hover:bg-blue-700 border-blue-600 hover:border-blue-700 text-white"
+      >
+        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+        </svg>
+        Add Stock Item
+      </button>
+    </div>
+  </div>
+</form>

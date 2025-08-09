@@ -1,0 +1,99 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" x-data="{ darkMode: JSON.parse(localStorage.getItem('darkMode')) || false }"
+  x-bind:class="{ 'dark': darkMode }">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Inventory Management System{% endblock %}</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="{% static 'js/new/tailwind.min.js' %}"></script>
+
+  <!-- DaisyUI CDN -->
+  <link rel="stylesheet" href="{% static 'css/new/daisyui.min.css' %}">
+
+  <!-- htmx CDN -->
+  <script src="{% static 'js/htmx.min.js' %}"></script>
+
+  <!-- Alpine.js CDN -->
+  <script defer src="{% static 'js/alpine.js' %}"></script>
+
+  <!-- Custom CSS for dark mode -->
+  <link rel="stylesheet" href="{% static 'css/new/theme.css' %}">
+
+  <!-- Tailwind dark mode configuration -->
+  <script src="{% static 'js/new/theme.js' %}"></script>
+
+  <!-- Extra Style -->
+  {% block extra_css %}{% endblock %}
+</head>
+
+<body 
+  x-data="
+    { 
+      sidebarOpen: true, 
+      currentPage: '{{ request.path|slice:'1:-1' }}',
+      openMenus: {},
+      toggleSidebar() { 
+        this.sidebarOpen = !this.sidebarOpen 
+      },
+      toggleTheme() { 
+        this.darkMode = !this.darkMode; 
+        localStorage.setItem('darkMode', JSON.stringify(this.darkMode)); 
+      },
+      toggleMenu(menuId) {
+        this.openMenus[menuId] = !this.openMenus[menuId];
+      },
+      setActivePage(page) {
+        this.currentPage = page;
+      },
+    }" class="bg-base-200 dark:bg-gray-900 transition-colors duration-300" x-cloak>
+  <!-- Header -->
+  {% include 'includes/new_dash_header.html' %}
+
+  <!-- Sidebar -->
+  {% include 'includes/new_dash_sidebar.html' %}
+
+  <!-- Main Content Area -->
+  <main class="transition-all duration-300 min-h-screen pt-16" :class="sidebarOpen ? 'lg:ml-64' : 'lg:ml-16'">
+    <div class="p-6 h-[calc(100vh-4rem)] overflow-y-auto">
+      <!-- Breadcrumb -->
+      {% include 'includes/new_breadcrumb.html' %}
+
+      <!-- Content Block for Django Templates -->
+      <div id="mainContent" class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4">
+        {% block content %}
+        {% endblock %}
+      </div>
+    </div>
+
+    {% if messages %}
+    <div class="toast toast-top toast-end z-50">
+      {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} shadow-lg toast-message transition duration-500 ease-in-out">
+          <span>{{ message }}</span>
+        </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </main>
+
+  <!-- Mobile Sidebar Overlay -->
+  <div x-show="sidebarOpen" @click="sidebarOpen = false" class="fixed inset-0 bg-black bg-opacity-50 z-30 lg:hidden"
+    x-transition:enter="transition-opacity duration-300" x-transition:enter-start="opacity-0"
+    x-transition:enter-end="opacity-100" x-transition:leave="transition-opacity duration-300"
+    x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"></div>
+
+  <!-- Toast Notifications (Optional) -->
+  <div class="toast toast-top toast-end z-50">
+    <!-- Toast messages can be dynamically added here -->
+  </div>
+
+  <script src="{% static 'js/index.js' %}"></script>
+
+  {% block extra_script %}{% endblock %}
+</body>
+
+</html>

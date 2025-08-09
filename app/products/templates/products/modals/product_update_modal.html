@@ -1,0 +1,112 @@
+<h3 class="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">Edit Product</h3>
+<form method="post" action="{% url 'products:product_update' product.id %}" enctype="multipart/form-data" class="space-y-4">
+  {% csrf_token %}
+
+  <div class="form-control w-full">
+    <label class="label">
+      <span class="label-text font-semibold text-gray-700 dark:text-gray-300">Product Name</span>
+    </label>
+    <input 
+      type="text" 
+      name="name" 
+      value="{{ product.name }}" 
+      placeholder="Enter product name"
+      class="input input-bordered w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 focus:border-blue-500 dark:focus:border-blue-400" 
+      required
+    >
+  </div>
+
+  <div class="form-control w-full">
+    <label class="label">
+      <span class="label-text font-semibold text-gray-700 dark:text-gray-300">Description</span>
+    </label>
+    <textarea 
+      name="description" 
+      class="textarea textarea-bordered w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 focus:border-blue-500 dark:focus:border-blue-400" 
+      rows="3"
+      placeholder="Enter product details..."
+    >{{ product.description }}</textarea>
+  </div>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div class="form-control w-full">
+      <label class="label">
+        <span class="label-text font-semibold text-gray-700 dark:text-gray-300">Category</span>
+      </label>
+      <select 
+        name="category" 
+        class="select select-bordered w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400"
+      >
+        <option value="" class="text-gray-500 dark:text-gray-400">-- Select Category --</option>
+        {% for cat in categories %}
+          <option 
+            value="{{ cat.id }}" 
+            {% if product.category.id == cat.id %}selected{% endif %}
+            class="text-gray-900 dark:text-gray-100"
+          >
+            {{ cat.name }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+  </div>
+
+  <div class="form-control w-full">
+    <label class="label">
+      <span class="label-text font-semibold text-gray-700 dark:text-gray-300">Product Image</span>
+    </label>
+    <div class="space-y-3">
+      {% if product.image %}
+        <div class="flex items-center gap-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-600">
+          <div class="avatar">
+            <div class="w-16 h-16 rounded-lg border border-gray-300 dark:border-gray-500 overflow-hidden">
+              <img src="{{ product.image.url }}" alt="Current Image" class="w-full h-full object-cover">
+            </div>
+          </div>
+          <div class="flex-1">
+            <p class="text-sm font-medium text-gray-700 dark:text-gray-300">Current Image</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400">Upload a new image to replace this one</p>
+          </div>
+        </div>
+      {% endif %}
+      
+      <div class="relative">
+        <input 
+          type="file" 
+          name="image" 
+          accept="image/*"
+          class="file-input file-input-bordered w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400"
+        >
+        <div class="label">
+          <span class="label-text-alt text-gray-500 dark:text-gray-400">
+            {% if product.image %}
+              Choose new image to replace current one (PNG, JPG, GIF up to 10MB)
+            {% else %}
+              PNG, JPG, GIF up to 10MB
+            {% endif %}
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-control mt-6 pt-4 border-t border-gray-200 dark:border-gray-600">
+    <div class="flex gap-3">
+      <button 
+        type="button" 
+        onclick="productModal.close()" 
+        class="btn btn-ghost flex-1 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600"
+      >
+        Cancel
+      </button>
+      <button 
+        type="submit" 
+        class="btn btn-primary flex-1 bg-blue-600 hover:bg-blue-700 border-blue-600 hover:border-blue-700 text-white"
+      >
+        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+        </svg>
+        Save Changes
+      </button>
+    </div>
+  </div>
+</form>

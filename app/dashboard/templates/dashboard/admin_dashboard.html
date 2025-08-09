@@ -1,0 +1,186 @@
+{% extends template_to_extend %} 
+{% load static %} 
+{% block title %}Admin Dashboard | Pet IMS{% endblock %} 
+
+{% block content %}
+<div class="flex items-center gap-3 p-6 pt-6">
+  <button class="btn btn-outline btn-sm">Month to date</button>
+  <button class="btn btn-outline btn-sm">Year to date</button>
+  <button class="btn btn-primary btn-sm">
+    Export {% include 'includes/svg/export_icon.html' %}
+  </button>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
+  <div class="card bg-primary text-primary-content shadow-lg">
+    <div class="card-body">
+      <h3 class="card-title text-lg">Sales Overview</h3>
+      <div class="flex flex-wrap gap-4">
+        <div class="flex items-center gap-2 min-w-32">
+          <div class="w-8 h-8 rounded-lg bg-blue-500"></div>
+          <div class="flex flex-col">
+            <span class="text-sm opacity-80">Total Sales</span>
+            <span class="text-xl font-bold">786</span>
+          </div>
+        </div>
+        <div class="flex items-center gap-2 min-w-32">
+          <div class="w-8 h-8 rounded-lg bg-orange-500"></div>
+          <div class="flex flex-col">
+            <span class="text-sm opacity-80">Revenue</span>
+            <span class="text-xl font-bold">17584</span>
+          </div>
+        </div>
+        <div class="flex items-center gap-2 min-w-32">
+          <div class="w-8 h-8 rounded-lg bg-red-500"></div>
+          <div class="flex flex-col">
+            <span class="text-sm opacity-80">Cost</span>
+            <span class="text-xl font-bold">12487</span>
+          </div>
+        </div>
+        <div class="flex items-center gap-2 min-w-32">
+          <div class="w-8 h-8 rounded-lg bg-green-500"></div>
+          <div class="flex flex-col">
+            <span class="text-sm opacity-80">Profit</span>
+            <span class="text-xl font-bold">5097</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="card bg-base-100 shadow-lg border border-base-300">
+    <div class="card-body">
+      <h3 class="card-title text-lg">Purchase Overview</h3>
+      <div class="flex flex-wrap gap-4">
+        <div class="flex items-center gap-2 min-w-32">
+          <div class="w-8 h-8 rounded-lg bg-purple-500"></div>
+          <div class="flex flex-col">
+            <span class="text-sm text-base-content/70">No of Purchase</span>
+            <span class="text-xl font-bold text-base-content">45</span>
+          </div>
+        </div>
+        <div class="flex items-center gap-2 min-w-32">
+          <div class="w-8 h-8 rounded-lg bg-pink-500"></div>
+          <div class="flex flex-col">
+            <span class="text-sm text-base-content/70">Cancel Order</span>
+            <span class="text-xl font-bold text-base-content">04</span>
+          </div>
+        </div>
+        <div class="flex items-center gap-2 min-w-32">
+          <div class="w-8 h-8 rounded-lg bg-orange-500"></div>
+          <div class="flex flex-col">
+            <span class="text-sm text-base-content/70">Cost</span>
+            <span class="text-xl font-bold text-base-content">786</span>
+          </div>
+        </div>
+        <div class="flex items-center gap-2 min-w-32">
+          <div class="w-8 h-8 rounded-lg bg-red-500"></div>
+          <div class="flex flex-col">
+            <span class="text-sm text-base-content/70">Returns</span>
+            <span class="text-xl font-bold text-base-content">07</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="card bg-base-100 shadow-lg border border-base-300">
+    <div class="card-body">
+      <h3 class="card-title text-lg">Inventory Summary</h3>
+      <div class="flex flex-wrap gap-4">
+        <div class="flex items-center gap-2 min-w-32">
+          <div class="w-8 h-8 rounded-lg bg-green-500"></div>
+          <div class="flex flex-col">
+            <span class="text-sm text-base-content/70"
+              >Quantity in Hand</span
+            >
+            <span class="text-xl font-bold text-base-content">214</span>
+          </div>
+        </div>
+        <div class="flex items-center gap-2 min-w-32">
+          <div class="w-8 h-8 rounded-lg bg-orange-500"></div>
+          <div class="flex flex-col">
+            <span class="text-sm text-base-content/70"
+              >Will be Received</span
+            >
+            <span class="text-xl font-bold text-base-content">44</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="card bg-base-100 shadow-lg border border-base-300">
+    <div class="card-body">
+      <h3 class="card-title text-lg">Product Details</h3>
+      <div class="flex flex-wrap gap-4">
+        <div class="flex items-center gap-2 min-w-32">
+          <div class="flex flex-col">
+            <span class="text-sm text-base-content/70"
+              >Low Stock Items</span
+            >
+            <span class="text-xl font-bold text-base-content">02</span>
+          </div>
+        </div>
+        <div class="flex items-center gap-2 min-w-32">
+          <div class="flex flex-col">
+            <span class="text-sm text-base-content/70">Item Group</span>
+            <span class="text-xl font-bold text-base-content">14</span>
+          </div>
+        </div>
+        <div class="flex items-center gap-2 min-w-32">
+          <div class="flex flex-col">
+            <span class="text-sm text-base-content/70">No of Items</span>
+            <span class="text-xl font-bold text-base-content">104</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="card bg-base-100 shadow-lg border border-base-300">
+    <div class="card-body">
+      <h3 class="card-title text-lg">No. of Users</h3>
+      <div class="flex flex-wrap gap-4">
+        <div class="flex items-center gap-2 min-w-32">
+          <div class="w-8 h-8 rounded-lg bg-blue-500"></div>
+          <div class="flex flex-col">
+            <span class="text-sm text-base-content/70"
+              >Total Customers</span
+            >
+            <span class="text-xl font-bold text-base-content">1.8k</span>
+          </div>
+        </div>
+        <div class="flex items-center gap-2 min-w-32">
+          <div class="w-8 h-8 rounded-lg bg-blue-500"></div>
+          <div class="flex flex-col">
+            <span class="text-sm text-base-content/70"
+              >Total Suppliers</span
+            >
+            <span class="text-xl font-bold text-base-content">27</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div
+    class="card bg-base-100 shadow-lg border border-base-300 lg:col-span-2"
+  >
+    <div class="card-body">
+      <h3 class="card-title text-lg">Sales And Purchase Statistics</h3>
+      <div
+        class="bg-base-200 rounded-xl p-4 mt-4 min-h-56 flex flex-col justify-end"
+      >
+        <div class="flex items-center gap-4 mb-2 text-base-content/70">
+          <div class="flex items-center gap-2">
+            <div class="w-4 h-2 rounded bg-blue-500"></div>
+            <span>Sales</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <div class="w-4 h-2 rounded bg-orange-500"></div>
+            <span>Purchase</span>
+          </div>
+        </div>
+        <div class="text-base-content/50 text-lg italic opacity-70 mt-3">
+          [Line Chart]
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

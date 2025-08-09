@@ -1,0 +1,42 @@
+services:
+  web:
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+    command: /usr/src/app/scripts/entrypoint.sh
+    volumes:
+      - static_volume:/usr/src/app/staticfiles
+      - media_volume:/usr/src/app/mediafiles
+    image: ims-img-prod:latest
+    container_name: ims-container-prod
+    expose:
+      - 8000
+    env_file:
+      - ./.env
+    depends_on:
+      - db
+
+  db:
+    image: postgres:15
+    container_name: ims-db-prod
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    env_file:
+      - ./.env.db
+
+  nginx:
+    build: ./nginx
+    volumes:
+      - static_volume:/usr/src/app/staticfiles/
+      - media_volume:/usr/src/app/mediafiles/
+    image: nginx-img-prod:latest
+    container_name: nginx-proxy-prod
+    ports:
+      - 1337:80
+    depends_on:
+      - web
+
+volumes:
+  postgres_data:
+  static_volume:
+  media_volume:

@@ -1,0 +1,447 @@
+{% extends template_to_extend %}
+{% load static %}
+{% block title %}Create Sale | Pet IMS{% endblock %}
+
+{% block content %}
+<div class="mb-6 flex justify-between items-center">
+  <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Create New Sale</h1>
+  <a href="{% url 'sales:sale_list' %}" class="btn btn-ghost btn-sm">
+    <span class="w-4 h-4 flex items-center justify-center">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 15.75L3 12m0 0l3.75-3.75M3 12h18" />
+      </svg>
+    </span>
+    Back to Sales
+  </a>
+</div>
+
+<form id="saleForm" method="post" class="space-y-6">
+  {% csrf_token %}
+  
+  <!-- Sale Items Section -->
+  <div class="bg-base-100 rounded-lg shadow-sm border border-base-300 p-6">
+    <div class="flex justify-between items-center mb-4">
+      <h2 class="text-xl font-semibold text-base-content flex items-center">
+        <svg class="w-5 h-5 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+        </svg>
+        Sale Items
+      </h2>
+      <button type="button" id="addItemBtn" class="btn btn-primary btn-sm">
+        <span class="w-4 h-4 flex items-center justify-center">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+          </svg>
+        </span>
+        Add Item
+      </button>
+    </div>
+
+    <div id="saleItemsContainer" class="space-y-4">
+      <!-- Initial empty state -->
+      <div id="emptyState" class="text-center py-8 text-base-content/60">
+        <div class="flex flex-col items-center gap-2">
+          <div class="w-12 h-12 rounded-full bg-base-200 flex items-center justify-center">
+            <span class="text-base-content/40 text-xl">🛒</span>
+          </div>
+          <span class="font-medium">No items added yet</span>
+          <span class="text-sm text-base-content/40">Click "Add Item" to start building the sale</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Items Summary Table -->
+    <div id="itemsSummary" class="mt-6 hidden">
+      <div class="overflow-x-auto bg-base-100 rounded-lg border border-base-300">
+        <table class="table w-full text-sm">
+          <thead class="bg-base-200/50">
+            <tr>
+              <th class="font-semibold">Product</th>
+              <th class="font-semibold">Batch</th>
+              <th class="font-semibold">Qty</th>
+              <th class="font-semibold">Unit Price</th>
+              <th class="font-semibold">Line Total</th>
+              <th class="font-semibold">Action</th>
+            </tr>
+          </thead>
+          <tbody id="summaryTableBody">
+            <!-- Dynamic content -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Payment Details -->
+  <div class="bg-base-100 rounded-lg shadow-sm border border-base-300 p-6">
+    <h2 class="text-xl font-semibold text-base-content mb-4 flex items-center">
+      <svg class="w-5 h-5 mr-2 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+      </svg>
+      Payment Details
+    </h2>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div class="space-y-4">
+        <div class="form-control">
+          <label class="label">
+            <span class="label-text font-medium">Discount Amount (৳)</span>
+          </label>
+          <input type="number" name="discount_amount" id="discountAmount" step="0.01" min="0" value="0.00"
+                 class="input input-bordered bg-white dark:bg-gray-700" placeholder="0.00">
+        </div>
+
+        <div class="form-control">
+          <label class="label">
+            <span class="label-text font-medium">Notes (Optional)</span>
+          </label>
+          <textarea name="notes" class="textarea textarea-bordered bg-white dark:bg-gray-700" 
+                    placeholder="Add any additional notes for this sale..." rows="3"></textarea>
+        </div>
+      </div>
+
+      <div class="space-y-4">
+        <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
+          <h3 class="font-semibold text-gray-900 dark:text-gray-100 mb-3">Payment Summary</h3>
+          <div class="space-y-2 text-sm">
+            <div class="flex justify-between">
+              <span class="text-gray-700 dark:text-gray-300">Subtotal:</span>
+              <span id="subtotalAmount" class="font-semibold text-blue-600 dark:text-blue-400">৳ 0.00</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-700 dark:text-gray-300">Discount:</span>
+              <span id="discountDisplay" class="font-semibold text-orange-600 dark:text-orange-400">৳ 0.00</span>
+            </div>
+            <hr class="border-gray-300 dark:border-gray-600">
+            <div class="flex justify-between text-lg">
+              <span class="font-bold text-gray-900 dark:text-gray-100">Final Total:</span>
+              <span id="finalTotal" class="font-bold text-green-600 dark:text-green-400">৳ 0.00</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="alert alert-info text-sm">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+          <span>Stock will be automatically deducted upon sale completion.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Action Buttons -->
+  <div class="flex gap-3 pt-4">
+    <button type="submit" id="createSaleBtn" class="btn btn-success flex-1" disabled>
+      <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+      </svg>
+      Complete Sale
+    </button>
+    <a href="{% url 'sales:sale_list' %}" class="btn btn-ghost flex-1">
+      Cancel
+    </a>
+  </div>
+
+  <!-- Hidden field for item count -->
+  <input type="hidden" name="item_count" id="itemCount" value="0">
+</form>
+
+<!-- Item Selection Modal -->
+<dialog id="itemModal" class="modal">
+  <div class="modal-box w-11/12 max-w-2xl">
+    <form method="dialog">
+      <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+    </form>
+    <h3 class="font-bold text-lg mb-4">Select Product to Add</h3>
+    
+    <div class="form-control mb-4">
+      <label class="label">
+        <span class="label-text font-medium">Search Product</span>
+      </label>
+      <input type="text" id="productSearch" placeholder="Search by product name or batch..." 
+             class="input input-bordered bg-white dark:bg-gray-700">
+    </div>
+
+    <div class="overflow-x-auto max-h-96">
+      <table class="table table-zebra w-full text-sm">
+        <thead>
+          <tr>
+            <th>Product</th>
+            <th>Batch</th>
+            <th>Available Stock</th>
+            <th>Sale Price</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="stockItemsTable">
+          {% for stock_item in stock_items %}
+          {% if stock_item.quantity > 0 %}
+          <tr data-product-name="{{ stock_item.product.name|lower }}" 
+              data-batch="{{ stock_item.batch_number|lower|default:'' }}">
+            <td>
+              <div class="flex items-center gap-2">
+                {% if stock_item.product.image %}
+                <img src="{{ stock_item.product.image.url }}" alt="Product" class="w-8 h-8 rounded object-cover">
+                {% endif %}
+                <span class="font-medium">{{ stock_item.product.name }}</span>
+              </div>
+            </td>
+            <td class="font-mono text-xs">{{ stock_item.batch_number|default:"—" }}</td>
+            <td>
+              <span class="{% if stock_item.quantity <= 10 %}text-warning{% else %}text-success{% endif %} font-semibold">
+                {{ stock_item.quantity }}
+              </span>
+            </td>
+            <td class="font-semibold text-info">৳ {{ stock_item.sale_price|floatformat:2 }}</td>
+            <td>
+              <button type="button" class="btn btn-primary btn-xs select-product-btn" 
+                      data-stock-id="{{ stock_item.id }}"
+                      data-product-name="{{ stock_item.product.name }}"
+                      data-product-image="{% if stock_item.product.image %}{{ stock_item.product.image.url }}{% endif %}"
+                      data-batch="{{ stock_item.batch_number|default:'' }}"
+                      data-available="{{ stock_item.quantity }}"
+                      data-sale-price="{{ stock_item.sale_price }}">
+                Select
+              </button>
+            </td>
+          </tr>
+          {% endif %}
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <form method="dialog" class="modal-backdrop">
+    <button>close</button>
+  </form>
+</dialog>
+
+<script>
+let itemIndex = 0;
+let selectedItems = [];
+
+// DOM elements
+const itemModal = document.getElementById('itemModal');
+const addItemBtn = document.getElementById('addItemBtn');
+const saleItemsContainer = document.getElementById('saleItemsContainer');
+const emptyState = document.getElementById('emptyState');
+const itemsSummary = document.getElementById('itemsSummary');
+const summaryTableBody = document.getElementById('summaryTableBody');
+const productSearch = document.getElementById('productSearch');
+const stockItemsTable = document.getElementById('stockItemsTable');
+const createSaleBtn = document.getElementById('createSaleBtn');
+const itemCountInput = document.getElementById('itemCount');
+const discountAmountInput = document.getElementById('discountAmount');
+
+// Add item button click
+addItemBtn.addEventListener('click', () => {
+  itemModal.showModal();
+});
+
+// Product search functionality
+productSearch.addEventListener('input', (e) => {
+  const searchTerm = e.target.value.toLowerCase();
+  const rows = stockItemsTable.querySelectorAll('tr');
+  
+  rows.forEach(row => {
+    const productName = row.dataset.productName || '';
+    const batch = row.dataset.batch || '';
+    const isVisible = productName.includes(searchTerm) || batch.includes(searchTerm);
+    row.style.display = isVisible ? '' : 'none';
+  });
+});
+
+// Select product functionality
+document.addEventListener('click', (e) => {
+  if (e.target.classList.contains('select-product-btn')) {
+    const data = e.target.dataset;
+    
+    // Check if item already exists
+    const existingItem = selectedItems.find(item => item.stockId === data.stockId);
+    if (existingItem) {
+      alert('This product is already added to the sale.');
+      return;
+    }
+    
+    addItemToSale({
+      stockId: data.stockId,
+      productName: data.productName,
+      productImage: data.productImage,
+      batch: data.batch,
+      available: parseInt(data.available),
+      salePrice: parseFloat(data.salePrice)
+    });
+    
+    itemModal.close();
+    productSearch.value = '';
+    // Reset search
+    stockItemsTable.querySelectorAll('tr').forEach(row => {
+      row.style.display = '';
+    });
+  }
+});
+
+function addItemToSale(data) {
+  const item = {
+    index: itemIndex,
+    stockId: data.stockId,
+    productName: data.productName,
+    productImage: data.productImage,
+    batch: data.batch,
+    available: data.available,
+    salePrice: data.salePrice,
+    quantity: 1
+  };
+  
+  selectedItems.push(item);
+  
+  // Create form inputs
+  createHiddenInputs(item);
+  
+  // Update summary table
+  updateSummaryTable();
+  
+  // Update UI state
+  updateUIState();
+  
+  itemIndex++;
+}
+
+function createHiddenInputs(item) {
+  const container = document.createElement('div');
+  container.id = `item-inputs-${item.index}`;
+  container.innerHTML = `
+    <input type="hidden" name="stock_item_${item.index}" value="${item.stockId}">
+    <input type="hidden" name="quantity_${item.index}" value="${item.quantity}">
+    <input type="hidden" name="sale_price_${item.index}" value="${item.salePrice}">
+  `;
+  saleItemsContainer.appendChild(container);
+}
+
+function updateSummaryTable() {
+  summaryTableBody.innerHTML = '';
+  
+  selectedItems.forEach(item => {
+    const lineTotal = item.quantity * item.salePrice;
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td>
+        <div class="flex items-center gap-2">
+          ${item.productImage ? `<img src="${item.productImage}" alt="Product" class="w-8 h-8 rounded object-cover">` : ''}
+          <span class="font-medium">${item.productName}</span>
+        </div>
+      </td>
+      <td class="font-mono text-xs">${item.batch || '—'}</td>
+      <td>
+        <input type="number" min="1" max="${item.available}" value="${item.quantity}" 
+               class="input input-xs input-bordered w-20 quantity-input" 
+               data-index="${item.index}">
+        <div class="text-xs text-gray-500 mt-1">Max: ${item.available}</div>
+      </td>
+      <td class="font-semibold text-info">৳ ${item.salePrice.toFixed(2)}</td>
+      <td class="font-bold text-success">৳ ${lineTotal.toFixed(2)}</td>
+      <td>
+        <button type="button" class="btn btn-error btn-xs remove-item-btn" data-index="${item.index}">
+          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+          </svg>
+        </button>
+      </td>
+    `;
+    summaryTableBody.appendChild(row);
+  });
+}
+
+// Handle quantity changes and item removal
+document.addEventListener('input', (e) => {
+  if (e.target.classList.contains('quantity-input')) {
+    const index = parseInt(e.target.dataset.index);
+    const quantity = parseInt(e.target.value);
+    const item = selectedItems.find(item => item.index === index);
+    
+    if (item && quantity > 0 && quantity <= item.available) {
+      item.quantity = quantity;
+      // Update hidden input
+      document.querySelector(`input[name="quantity_${index}"]`).value = quantity;
+      updateSummaryTable();
+      updatePaymentSummary();
+    } else if (quantity > item.available) {
+      e.target.value = item.available;
+      item.quantity = item.available;
+      document.querySelector(`input[name="quantity_${index}"]`).value = item.available;
+    }
+  }
+});
+
+document.addEventListener('click', (e) => {
+  if (e.target.closest('.remove-item-btn')) {
+    const index = parseInt(e.target.closest('.remove-item-btn').dataset.index);
+    removeItem(index);
+  }
+});
+
+function removeItem(index) {
+  // Remove from selectedItems array
+  selectedItems = selectedItems.filter(item => item.index !== index);
+  
+  // Remove hidden inputs
+  const inputContainer = document.getElementById(`item-inputs-${index}`);
+  if (inputContainer) {
+    inputContainer.remove();
+  }
+  
+  // Update displays
+  updateSummaryTable();
+  updateUIState();
+}
+
+function updateUIState() {
+  const hasItems = selectedItems.length > 0;
+  
+  emptyState.style.display = hasItems ? 'none' : 'block';
+  itemsSummary.style.display = hasItems ? 'block' : 'none';
+  createSaleBtn.disabled = !hasItems;
+  
+  // Update item count
+  itemCountInput.value = selectedItems.length;
+  
+  updatePaymentSummary();
+}
+
+function updatePaymentSummary() {
+  const subtotal = selectedItems.reduce((sum, item) => sum + (item.quantity * item.salePrice), 0);
+  const discount = parseFloat(discountAmountInput.value) || 0;
+  const finalTotal = Math.max(0, subtotal - discount);
+  
+  document.getElementById('subtotalAmount').textContent = `৳ ${subtotal.toFixed(2)}`;
+  document.getElementById('discountDisplay').textContent = `৳ ${discount.toFixed(2)}`;
+  document.getElementById('finalTotal').textContent = `৳ ${finalTotal.toFixed(2)}`;
+}
+
+// Update payment summary when discount changes
+discountAmountInput.addEventListener('input', updatePaymentSummary);
+
+// Form submission
+document.getElementById('saleForm').addEventListener('submit', (e) => {
+  if (selectedItems.length === 0) {
+    e.preventDefault();
+    alert('Please add at least one item to the sale.');
+    return;
+  }
+  
+  const discount = parseFloat(discountAmountInput.value) || 0;
+  const subtotal = selectedItems.reduce((sum, item) => sum + (item.quantity * item.salePrice), 0);
+  
+  if (discount > subtotal) {
+    e.preventDefault();
+    alert('Discount amount cannot exceed the subtotal.');
+    return;
+  }
+});
+
+// Initialize
+updateUIState();
+</script>
+
+{% endblock %}

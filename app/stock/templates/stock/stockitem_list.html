@@ -1,0 +1,319 @@
+{% extends template_to_extend %} 
+{% load static %} 
+{% block title %}Stock Items | Pet IMS{% endblock %}
+
+{% block content %}
+<div class="mb-6 flex justify-between items-center">
+  <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Stock Items</h1>
+
+  <div class="flex items-center gap-3">
+    <button class="btn btn-primary btn-sm">
+      Export {% include 'includes/svg/export_icon.html' %}
+    </button>
+
+    {% if request.user.role == 'admin' or request.user.role == 'inventory_manager' %}
+    <a 
+      class="btn btn-primary btn-sm" 
+      title="Add Stock Item"
+      hx-get="{% url 'stock:stockitem_create' %}" 
+      hx-target="#stockModalContent"
+      hx-swap="innerHTML"
+      onclick="stockModal.showModal()"
+    >
+      Add Stock
+      <span class="w-4 h-4 flex items-center justify-center">
+        {% include 'includes/svg/plus_icon.html' %}
+      </span>
+    </a>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Filters -->
+<div class="mb-6 bg-base-100 rounded-lg shadow-sm border border-base-300 p-4">
+  <form method="get" class="flex flex-wrap gap-4 items-end">
+    <div class="form-control">
+      <label class="label">
+        <span class="label-text font-medium">Filter by Product</span>
+      </label>
+      <select name="product_id" class="select select-bordered select-sm w-48 bg-white dark:bg-gray-700">
+        <option value="">All Products</option>
+        {% for product in products %}
+        <option value="{{ product.id }}" {% if request.GET.product_id == product.id|stringformat:"s" %}selected{% endif %}>
+          {{ product.name }}
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="form-control">
+      <label class="label">
+        <span class="label-text font-medium">Filter by Location</span>
+      </label>
+      <select name="location_id" class="select select-bordered select-sm w-48 bg-white dark:bg-gray-700">
+        <option value="">All Locations</option>
+        {% for location in locations %}
+        <option value="{{ location.id }}" {% if request.GET.location_id == location.id|stringformat:"s" %}selected{% endif %}>
+          {{ location.name }}
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="form-control">
+      <label class="label">
+        <span class="label-text font-medium">Filter by Supplier</span>
+      </label>
+      <select name="supplier_id" class="select select-bordered select-sm w-48 bg-white dark:bg-gray-700">
+        <option value="">All Suppliers</option>
+        {% for supplier in suppliers %}
+        <option value="{{ supplier.id }}" {% if request.GET.supplier_id == supplier.id|stringformat:"s" %}selected{% endif %}>
+          {{ supplier.name }}
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="form-control">
+      <button type="submit" class="btn btn-neutral btn-sm">
+        <span class="w-4 h-4 flex items-center justify-center">
+          {% include 'includes/svg/search_icon.html' %}
+        </span>
+        Filter
+      </button>
+    </div>
+
+    {% if request.GET.product_id or request.GET.location_id %}
+    <div class="form-control">
+      <a href="{% url 'stock:stockitem_list' %}" class="btn btn-ghost btn-sm">
+        Clear Filters
+      </a>
+    </div>
+    {% endif %}
+  </form>
+</div>
+  
+<div class="overflow-x-auto bg-base-100 rounded-lg shadow-lg border border-base-300">
+  <table class="table w-full text-sm">
+    <thead class="bg-base-200/50 border-b border-base-300">
+      <tr class="text-base-content/90">
+        <th class="font-semibold">#</th>
+        <th class="font-semibold">Product</th>
+        <th class="font-semibold">Batch Number</th>
+        <th class="font-semibold">Quantity</th>
+        <th class="font-semibold">Purchase Price</th>
+        <th class="font-semibold">Sale Price</th>
+        <th class="font-semibold">Location</th>
+        <th class="font-semibold">Supplier</th>
+        <th class="font-semibold">Expires</th>
+        <th class="font-semibold">Status</th>
+        <th class="font-semibold">Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for stock_item in stock_items %}
+      <tr class="hover:bg-base-200 transition-colors duration-200 border-b border-base-300/50 {% cycle 'bg-base-100' 'bg-base-200/20' %}">
+        <td class="text-base-content/80">{{ forloop.counter }}</td>
+        <td>
+          <div class="flex items-center gap-2">
+            {% if stock_item.product.image %}
+            <div class="avatar">
+              <div class="w-8 h-8 rounded border border-base-300 overflow-hidden">
+                <img src="{{ stock_item.product.image.url }}" alt="Product" class="w-full h-full object-cover" />
+              </div>
+            </div>
+            {% endif %}
+            <span class="font-medium text-base-content">{{ stock_item.product.name }}</span>
+          </div>
+        </td>
+        <td class="text-base-content font-mono text-xs">{{ stock_item.batch_number }}</td>
+        <td>
+          <div class="flex items-center gap-1">
+            <span class="font-semibold {% if stock_item.quantity <= 10 %}text-error{% elif stock_item.quantity <= 50 %}text-warning{% else %}text-success{% endif %}">
+              {{ stock_item.quantity }}
+            </span>
+            <span class="text-base-content/60 text-xs">units</span>
+          </div>
+        </td>
+        <td class="text-warning font-medium">৳ {{ stock_item.purchase_price|default:"—" }}</td>
+        <td class="text-success font-semibold">৳ {{ stock_item.sale_price }}</td>
+        <td>
+          {% if stock_item.stock_location %}
+          <span class="badge badge-outline badge-sm">{{ stock_item.stock_location.name }}</span>
+          {% else %}
+          <span class="text-base-content/60">—</span>
+          {% endif %}
+        </td>
+        <td class="text-base-content">{{ stock_item.supplier.name | default:"—" }}</td>
+        <td>
+          {% if stock_item.expiration_date %}
+          <span class="font-mono text-xs {% if stock_item.expiration_date|date:'Y-m-d' < today|date:'Y-m-d' %}text-error{% elif stock_item.expiration_date|date:'Y-m-d' <= future_30_days|date:'Y-m-d' %}text-warning{% else %}text-base-content{% endif %}">
+            {{ stock_item.expiration_date|date:"Y-m-d" }}
+          </span>
+          {% else %}
+          <span class="text-base-content/60">—</span>
+          {% endif %}
+        </td>
+        <td>
+          {% comment %} TODO: we have to handle it efficiently {% endcomment %}
+          {% if stock_item.quantity == 0 %}
+          <span class="badge badge-error badge-sm">Out of Stock</span>
+          {% elif stock_item.quantity <= 10 %}
+          <span class="badge badge-warning badge-sm">Low Stock</span>
+          {% elif stock_item.expiration_date and stock_item.expiration_date|date:'Y-m-d' < today|date:'Y-m-d' %}
+          <span class="badge badge-error badge-sm">Expired</span>
+          {% elif stock_item.expiration_date and stock_item.expiration_date|date:'Y-m-d' <= future_30_days|date:'Y-m-d' %}
+          <span class="badge badge-warning badge-sm">Expiring Soon</span>
+          {% else %}
+          <span class="badge badge-success badge-sm">In Stock</span>
+          {% endif %}
+        </td>
+        <td>
+          <div class="flex gap-1">
+            <div class="tooltip" data-tip="View Details">
+              <a 
+                class="btn btn-xs btn-info btn-outline hover:btn-info" 
+                hx-get="{% url 'stock:stockitem_detail' stock_item.id %}" 
+                hx-target="#stockModalContent"
+                hx-swap="innerHTML"
+                onclick="stockModal.showModal()"
+              >
+                <span class="w-4 h-4 flex items-center justify-center">
+                  {% include 'includes/svg/circle_info_icon.html' %}
+                </span>
+              </a>
+            </div>
+            {% if request.user.role == 'admin' or request.user.role == 'inventory_manager' %}
+            <div class="tooltip" data-tip="Edit Stock">
+              <a 
+                class="btn btn-xs btn-warning btn-outline hover:btn-warning" 
+                hx-get="{% url 'stock:stockitem_update' stock_item.id %}" 
+                hx-target="#stockModalContent"
+                hx-swap="innerHTML"
+                onclick="stockModal.showModal()"
+              >
+                <span class="w-4 h-4 flex items-center justify-center">
+                  {% include 'includes/svg/pen_icon.html' %}
+                </span>
+              </a>
+            </div>
+            <div class="tooltip" data-tip="Adjust Quantity">
+              <a 
+                class="btn btn-xs btn-accent btn-outline hover:btn-accent" 
+                hx-get="{% url 'stock:stockitem_adjust' stock_item.id %}" 
+                hx-target="#stockModalContent"
+                hx-swap="innerHTML"
+                onclick="stockModal.showModal()"
+                disabled
+              >
+                <span class="w-4 h-4 flex items-center justify-center">
+                  {% include 'includes/svg/adjustments_icon.html' %}
+                </span>
+              </a>
+            </div>
+            <div class="tooltip" data-tip="Delete Stock">
+              <a 
+                class="btn btn-xs btn-error btn-outline hover:btn-error" 
+                hx-get="{% url 'stock:stockitem_delete' stock_item.id %}" 
+                hx-target="#stockModalContent"
+                hx-swap="innerHTML"
+                onclick="stockModal.showModal()"
+              >
+                <span class="w-4 h-4 flex items-center justify-center">
+                  {% include 'includes/svg/delete_icon.html' %}
+                </span>
+              </a>
+            </div>
+            {% endif %}
+          </div>
+        </td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="11" class="text-center text-base-content/60 py-8">
+          <div class="flex flex-col items-center gap-2">
+            <div class="w-12 h-12 rounded-full bg-base-200 flex items-center justify-center">
+              <span class="text-base-content/40 text-xl">📦</span>
+            </div>
+            <span class="font-medium">No stock items found</span>
+            {% if request.GET.product_id or request.GET.location_id %}
+            <span class="text-sm text-base-content/40">Try adjusting your filters</span>
+            {% else %}
+            <span class="text-sm text-base-content/40">Start by adding your first stock item</span>
+            {% endif %}
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- Pagination -->
+{% if is_paginated %}
+<div class="mt-6 flex justify-center">
+  <div class="join bg-base-100 shadow-sm rounded-lg border border-base-300">
+    {% if page_obj.has_previous %}
+      <a href="?page=1{% if request.GET.product_id %}&product_id={{ request.GET.product_id }}{% endif %}{% if request.GET.location_id %}&location_id={{ request.GET.location_id }}{% endif %}" class="join-item btn btn-sm btn-ghost hover:bg-base-200">First</a>
+      <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.product_id %}&product_id={{ request.GET.product_id }}{% endif %}{% if request.GET.location_id %}&location_id={{ request.GET.location_id }}{% endif %}" class="join-item btn btn-sm btn-ghost hover:bg-base-200">‹ Prev</a>
+    {% endif %}
+    <span class="join-item btn btn-sm btn-active">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}
+      <a href="?page={{ page_obj.next_page_number }}{% if request.GET.product_id %}&product_id={{ request.GET.product_id }}{% endif %}{% if request.GET.location_id %}&location_id={{ request.GET.location_id }}{% endif %}" class="join-item btn btn-sm btn-ghost hover:bg-base-200">Next ›</a>
+      <a href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.product_id %}&product_id={{ request.GET.product_id }}{% endif %}{% if request.GET.location_id %}&location_id={{ request.GET.location_id }}{% endif %}" class="join-item btn btn-sm btn-ghost hover:bg-base-200">Last</a>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+
+{% comment %} Stock create/update/detail/adjust Modal {% endcomment %}
+
+<dialog id="stockModal" class="modal">
+  <div class="modal-box max-w-4xl bg-white dark:bg-gray-700 border border-base-300">
+    <form method="dialog">
+      <button class="btn btn-sm btn-circle btn-ghost absolute right-3 top-3 hover:bg-base-200">✕</button>
+    </form>
+    <div id="stockModalContent" class="mt-4">
+      <div class="flex items-center justify-center py-8">
+        <span class="loading loading-spinner loading-md text-primary"></span>
+      </div>
+    </div>
+  </div>
+</dialog>
+
+{% endblock %}
+
+{% block extra_script %}
+<script>
+  function bindStockDeleteLogic() {
+    const input = document.getElementById('stockConfirmText');
+    const button = document.getElementById('stockDeleteButton');
+  
+    if (!input || !button) {
+      return;
+    }
+  
+    input.addEventListener('input', function () {
+      const value = input.value.trim();
+
+      console.log(value)
+  
+      if (value === 'DELETE') {
+        button.removeAttribute('disabled');
+      } else {
+        button.setAttribute('disabled', 'true');
+      }
+    });
+  }
+
+  document.body.addEventListener('htmx:afterSwap', (event) => {
+    const modalContent = event.target;
+
+    if (modalContent.id === 'stockModalContent' && modalContent.querySelector('[data-delete-stock-modal]')) {
+      console.log('HTMX swap completed. Binding stock delete logic.');
+      bindStockDeleteLogic();
+    }
+  });
+</script>
+  
+{% endblock %}

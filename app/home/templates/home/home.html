@@ -1,0 +1,468 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Dashboard - Inventory Management{% endblock %}
+
+{% block extra_css %}
+<style>
+    .hero-gradient {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    .card-hover {
+        transition: all 0.3s ease;
+    }
+    .card-hover:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+    .stat-hover {
+        transition: all 0.2s ease;
+    }
+    .stat-hover:hover {
+        transform: scale(1.02);
+    }
+    .feature-icon {
+        transition: all 0.3s ease;
+    }
+    .feature-card:hover .feature-icon {
+        transform: scale(1.1);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="hero hero-gradient text-white py-16 mb-8">
+    <div class="hero-content text-center">
+        <div class="max-w-md">
+            <h1 class="text-5xl font-bold mb-4">Inventory Management</h1>
+            <p class="text-lg opacity-90 mb-6">Streamline your inventory operations with our comprehensive management system</p>
+            <div class="flex gap-4 justify-center flex-wrap">
+                <a href="{% url 'dashboard:dashboard' %}" class="btn btn-primary bg-white text-blue-600 border-white hover:bg-gray-100 hover:border-gray-100">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 002 2h2a2 2 0 002-2V9a2 2 0 00-2-2h-2a2 2 0 00-2-2z"/>
+                    </svg>
+                    Go to Dashboard
+                </a>
+                <a href="{% url 'products:product_list' %}" class="btn btn-outline border-white text-white hover:bg-white hover:text-blue-600">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                    </svg>
+                    View Products
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Stats -->
+<div class="container mx-auto px-4 mb-8">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="stat bg-white dark:bg-gray-800 shadow-lg rounded-lg border border-gray-200 dark:border-gray-600 stat-hover">
+            <div class="stat-figure text-blue-500">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                </svg>
+            </div>
+            <div class="stat-title text-gray-600 dark:text-gray-400">Total Products</div>
+            <div class="stat-value text-gray-900 dark:text-gray-100">{{ total_products|default:"0" }}</div>
+            <div class="stat-desc text-green-500">Active inventory items</div>
+        </div>
+
+        <div class="stat bg-white dark:bg-gray-800 shadow-lg rounded-lg border border-gray-200 dark:border-gray-600 stat-hover">
+            <div class="stat-figure text-orange-500">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+            </div>
+            <div class="stat-title text-gray-600 dark:text-gray-400">Low Stock</div>
+            <div class="stat-value text-gray-900 dark:text-gray-100">{{ low_stock_count|default:"0" }}</div>
+            <div class="stat-desc text-orange-500">Items need restocking</div>
+        </div>
+
+        <div class="stat bg-white dark:bg-gray-800 shadow-lg rounded-lg border border-gray-200 dark:border-gray-600 stat-hover">
+            <div class="stat-figure text-green-500">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/>
+                </svg>
+            </div>
+            <div class="stat-title text-gray-600 dark:text-gray-400">Categories</div>
+            <div class="stat-value text-gray-900 dark:text-gray-100">{{ total_categories|default:"0" }}</div>
+            <div class="stat-desc text-green-500">Product categories</div>
+        </div>
+
+        <div class="stat bg-white dark:bg-gray-800 shadow-lg rounded-lg border border-gray-200 dark:border-gray-600 stat-hover">
+            <div class="stat-figure text-purple-500">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"/>
+                </svg>
+            </div>
+            <div class="stat-title text-gray-600 dark:text-gray-400">Total Value</div>
+            <div class="stat-value text-gray-900 dark:text-gray-100">৳ {{ total_inventory_value|floatformat:0|default:"0" }}</div>
+            <div class="stat-desc text-purple-500">Inventory worth</div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="container mx-auto px-4 mb-8">
+    <div class="text-center mb-8">
+        <h2 class="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">Quick Actions</h2>
+        <p class="text-gray-600 dark:text-gray-400">Access frequently used features</p>
+    </div>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- Add Product -->
+        <div class="card bg-white dark:bg-gray-800 shadow-lg border border-gray-200 dark:border-gray-600 card-hover feature-card">
+            <div class="card-body text-center">
+                <div class="feature-icon mx-auto mb-4 w-16 h-16 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
+                    <svg class="w-8 h-8 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                    </svg>
+                </div>
+                <h3 class="card-title text-gray-900 dark:text-gray-100 mb-2">Add New Product</h3>
+                <p class="text-gray-600 dark:text-gray-400 mb-4">Register a new product in your inventory system</p>
+                <div class="card-actions justify-center">
+                    <a href="#" class="btn btn-primary bg-blue-600 hover:bg-blue-700 border-blue-600 hover:border-blue-700">
+                        Add Product
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Manage Inventory -->
+        <div class="card bg-white dark:bg-gray-800 shadow-lg border border-gray-200 dark:border-gray-600 card-hover feature-card">
+            <div class="card-body text-center">
+                <div class="feature-icon mx-auto mb-4 w-16 h-16 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center">
+                    <svg class="w-8 h-8 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+                    </svg>
+                </div>
+                <h3 class="card-title text-gray-900 dark:text-gray-100 mb-2">Manage Inventory</h3>
+                <p class="text-gray-600 dark:text-gray-400 mb-4">Update stock levels and track inventory movements</p>
+                <div class="card-actions justify-center">
+                    <a href="{% url 'stock:stockitem_list' %}" class="btn btn-success bg-green-600 hover:bg-green-700 border-green-600 hover:border-green-700">
+                        Manage Stock
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Generate Reports -->
+        <div class="card bg-white dark:bg-gray-800 shadow-lg border border-gray-200 dark:border-gray-600 card-hover feature-card">
+            <div class="card-body text-center">
+                <div class="feature-icon mx-auto mb-4 w-16 h-16 bg-purple-100 dark:bg-purple-900 rounded-full flex items-center justify-center">
+                    <svg class="w-8 h-8 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                </div>
+                <h3 class="card-title text-gray-900 dark:text-gray-100 mb-2">Generate Reports</h3>
+                <p class="text-gray-600 dark:text-gray-400 mb-4">View detailed analytics and inventory reports</p>
+                <div class="card-actions justify-center">
+                    <a href="#" class="btn btn-secondary bg-purple-600 hover:bg-purple-700 border-purple-600 hover:border-purple-700">
+                        View Reports
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Scan Barcode -->
+        <div class="card bg-white dark:bg-gray-800 shadow-lg border border-gray-200 dark:border-gray-600 card-hover feature-card">
+            <div class="card-body text-center">
+                <div class="feature-icon mx-auto mb-4 w-16 h-16 bg-indigo-100 dark:bg-indigo-900 rounded-full flex items-center justify-center">
+                    <svg class="w-8 h-8 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/>
+                    </svg>
+                </div>
+                <h3 class="card-title text-gray-900 dark:text-gray-100 mb-2">Scan Barcode</h3>
+                <p class="text-gray-600 dark:text-gray-400 mb-4">Quick lookup and update using barcode scanner</p>
+                <div class="card-actions justify-center">
+                    <button onclick="startBarcodeScanner()" class="btn btn-info bg-indigo-600 hover:bg-indigo-700 border-indigo-600 hover:border-indigo-700">
+                        Start Scanner
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Categories -->
+        <div class="card bg-white dark:bg-gray-800 shadow-lg border border-gray-200 dark:border-gray-600 card-hover feature-card">
+            <div class="card-body text-center">
+                <div class="feature-icon mx-auto mb-4 w-16 h-16 bg-orange-100 dark:bg-orange-900 rounded-full flex items-center justify-center">
+                    <svg class="w-8 h-8 text-orange-600 dark:text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                    </svg>
+                </div>
+                <h3 class="card-title text-gray-900 dark:text-gray-100 mb-2">Manage Categories</h3>
+                <p class="text-gray-600 dark:text-gray-400 mb-4">Organize products into categories</p>
+                <div class="card-actions justify-center">
+                    <a href="{% url 'products:category_list' %}" class="btn btn-warning bg-orange-600 hover:bg-orange-700 border-orange-600 hover:border-orange-700">
+                        View Categories
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings -->
+        <div class="card bg-white dark:bg-gray-800 shadow-lg border border-gray-200 dark:border-gray-600 card-hover feature-card">
+            <div class="card-body text-center">
+                <div class="feature-icon mx-auto mb-4 w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center">
+                    <svg class="w-8 h-8 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                </div>
+                <h3 class="card-title text-gray-900 dark:text-gray-100 mb-2">System Settings</h3>
+                <p class="text-gray-600 dark:text-gray-400 mb-4">Configure system preferences and settings</p>
+                <div class="card-actions justify-center">
+                    <a href="#" class="btn btn-ghost text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600">
+                        Open Settings
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activity -->
+<div class="container mx-auto px-4 mb-8">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-600">
+        <div class="p-6 border-b border-gray-200 dark:border-gray-600">
+            <div class="flex justify-between items-center">
+                <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100 flex items-center">
+                    <svg class="w-6 h-6 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    Recent Activity
+                </h3>
+                <a href="#" class="text-blue-600 dark:text-blue-400 hover:underline text-sm">View All</a>
+            </div>
+        </div>
+        <div class="p-6">
+            {% if recent_activities %}
+            <div class="space-y-4">
+                {% for activity in recent_activities %}
+                <div class="flex items-center space-x-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                    <div class="flex-shrink-0">
+                        {% if activity.action_type == 'create' %}
+                        <div class="w-8 h-8 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center">
+                            <svg class="w-4 h-4 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                            </svg>
+                        </div>
+                        {% elif activity.action_type == 'update' %}
+                        <div class="w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
+                            <svg class="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                            </svg>
+                        </div>
+                        {% else %}
+                        <div class="w-8 h-8 bg-gray-100 dark:bg-gray-600 rounded-full flex items-center justify-center">
+                            <svg class="w-4 h-4 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                            {{ activity.description }}
+                        </p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">
+                            {{ activity.created_at|timesince }} ago by {{ activity.user.get_full_name|default:activity.user.username }}
+                        </p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-8">
+                <svg class="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">No recent activity</h3>
+                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Get started by adding your first product.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Quick Search -->
+<div class="container mx-auto px-4 mb-8">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-600 p-6">
+        <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
+            <svg class="w-6 h-6 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+            Quick Search
+        </h3>
+        <div class="flex gap-4">
+            <div class="form-control flex-1">
+                <div class="input-group">
+                    <input 
+                        type="text" 
+                        placeholder="Search products by name, SKU, or barcode..." 
+                        class="input input-bordered w-full bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-900 dark:text-gray-100"
+                        id="quickSearch"
+                        hx-get="#"
+                        hx-trigger="keyup changed delay:300ms"
+                        hx-target="#searchResults"
+                        hx-include="[name='q']"
+                        name="q"
+                    >
+                    <button class="btn btn-square btn-primary bg-blue-600 hover:bg-blue-700 border-blue-600 hover:border-blue-700">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <!-- Search Results -->
+        <div id="searchResults" class="mt-4"></div>
+    </div>
+</div>
+
+<!-- Low Stock Alert -->
+{% if low_stock_products %}
+<div class="container mx-auto px-4 mb-8">
+    <div class="alert alert-warning bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800">
+        <svg class="w-6 h-6 text-orange-600 dark:text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+        </svg>
+        <div>
+            <h3 class="font-bold text-orange-800 dark:text-orange-200">Low Stock Alert!</h3>
+            <div class="text-sm text-orange-700 dark:text-orange-300">
+                {{ low_stock_products.count }} product{{ low_stock_products.count|pluralize }} running low on stock.
+                <a href="{% url 'inventory:low_stock' %}" class="underline font-medium">View Details</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Welcome Message for New Users -->
+{% if not user.last_login or user.date_joined == user.last_login %}
+<div class="container mx-auto px-4 mb-8">
+    <div class="alert alert-info bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
+        <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        <div>
+            <h3 class="font-bold text-blue-800 dark:text-blue-200">Welcome to InventoryPro!</h3>
+            <div class="text-sm text-blue-700 dark:text-blue-300">
+                Get started by adding your first product or exploring the dashboard.
+                <a href="#" class="underline font-medium">View Getting Started Guide</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<script>
+    // Theme toggle functionality
+    function toggleTheme() {
+        const html = document.documentElement;
+        const currentTheme = html.getAttribute('data-theme');
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        html.setAttribute('data-theme', newTheme);
+        localStorage.setItem('theme', newTheme);
+    }
+
+    // Load saved theme
+    document.addEventListener('DOMContentLoaded', function() {
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        const themeToggle = document.querySelector('.theme-controller');
+        if (themeToggle) {
+            themeToggle.checked = savedTheme === 'dark';
+        }
+    });
+
+    // Barcode scanner functionality
+    function startBarcodeScanner() {
+        // This would integrate with your barcode scanning solution
+        // For now, show a simple modal
+        const modal = document.getElementById('barcodeScannerModal');
+        if (modal) {
+            modal.showModal();
+        } else {
+            alert('Barcode scanner feature coming soon!');
+        }
+    }
+
+    // Quick search enhancement
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.getElementById('quickSearch');
+        if (searchInput) {
+            searchInput.addEventListener('focus', function() {
+                this.parentElement.classList.add('input-group-focus');
+            });
+            searchInput.addEventListener('blur', function() {
+                this.parentElement.classList.remove('input-group-focus');
+            });
+        }
+    });
+</script>
+
+<!-- Barcode Scanner Modal (Optional) -->
+<dialog id="barcodeScannerModal" class="modal">
+    <div class="modal-box bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600">
+        <h3 class="font-bold text-lg text-gray-900 dark:text-gray-100 mb-4">Barcode Scanner</h3>
+        <div class="py-4">
+            <div class="form-control">
+                <label class="label">
+                    <span class="label-text text-gray-700 dark:text-gray-300">Scan or enter barcode manually:</span>
+                </label>
+                <input 
+                    type="text" 
+                    placeholder="Barcode number..." 
+                    class="input input-bordered w-full bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-900 dark:text-gray-100"
+                    id="manualBarcode"
+                    autofocus
+                >
+            </div>
+            <div class="mt-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 text-center">
+                <svg class="w-16 h-16 mx-auto text-gray-400 dark:text-gray-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/>
+                </svg>
+                <p class="text-sm text-gray-600 dark:text-gray-400">Camera scanner integration coming soon</p>
+            </div>
+        </div>
+        <div class="modal-action">
+            <button 
+                class="btn btn-primary bg-blue-600 hover:bg-blue-700 border-blue-600 hover:border-blue-700"
+                onclick="searchByBarcode()"
+            >
+                Search Product
+            </button>
+            <form method="dialog">
+                <button class="btn btn-ghost text-gray-700 dark:text-gray-300">Close</button>
+            </form>
+        </div>
+    </div>
+</dialog>
+
+<script>
+    function searchByBarcode() {
+        const barcode = document.getElementById('manualBarcode').value.trim();
+        if (barcode) {
+            window.location.href = `#?barcode=${encodeURIComponent(barcode)}`;
+        }
+    }
+
+    // Allow Enter key to search
+    document.getElementById('manualBarcode')?.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            searchByBarcode();
+        }
+    });
+</script>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Additional homepage-specific JavaScript can go here
+    console.log('Inventory Management Homepage loaded');
+</script>
+{% endblock %}

@@ -1,0 +1,177 @@
+{% extends template_to_extend %}
+{% load static %} 
+{% block title %}Product List | Pet IMS{% endblock %}
+
+
+{% block content %}
+
+<div class="container">
+  <div class="flex justify-between items-center mb-6">
+    <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Category List</h1>
+
+    {% if request.user.role == 'admin' or request.user.role == 'inventory_manager' %}
+    <a 
+      class="btn btn-primary btn-sm" 
+      title="Create Category"
+      hx-get="{% url 'products:category_create' %}" 
+      hx-target="#categoryModalContent"
+      hx-swap="innerHTML"
+      onclick="categoryModal.showModal()"
+    >
+      Add Category
+      <span class="w-4 h-4 flex items-center justify-center">
+        {% include 'includes/svg/plus_icon.html' %}
+      </span>
+    </a>
+    {% endif %}
+
+
+  </div>
+  
+  <div class="overflow-x-auto bg-base-100 rounded-lg shadow-lg border border-base-300">
+    <table class="table w-full text-sm">
+      <thead class="bg-base-200/50 border-b border-base-300">
+        <tr class="text-base-content/90">
+          <th class="font-semibold">#</th>
+          <th class="font-semibold">Name</th>
+          <th class="font-semibold">Description</th>
+          <th class="font-semibold">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for category in categories %}
+        <tr class="hover:bg-base-200 transition-colors duration-200 border-b border-base-300/50 {% cycle 'bg-base-100' 'bg-base-200/20' %}">
+          <td class="text-base-content/80">{{ forloop.counter }}</td>
+          <td class="font-medium text-base-content">{{ category.name }}</td>
+          <td class="text-base-content/80">
+            {% if category.description %}
+              <span class="line-clamp-2">{{ category.description }}</span>
+            {% else %}
+              <span class="text-base-content/40">—</span>
+            {% endif %}
+          </td>
+          <td>
+            <div class="flex gap-1">
+              <div class="tooltip" data-tip="View Details">
+                <a 
+                  class="btn btn-xs btn-info btn-outline hover:btn-info" 
+                  hx-get="{% url 'products:category_detail' category.id %}" 
+                  hx-target="#categoryModalContent"
+                  hx-swap="innerHTML"
+                  onclick="categoryModal.showModal()"
+                >
+                  <span class="w-4 h-4 flex items-center justify-center">
+                    {% include 'includes/svg/circle_info_icon.html' %}
+                  </span>
+                </a>
+              </div>
+              {% if request.user.role == 'admin' or request.user.role == 'inventory_manager' %}
+              <div class="tooltip" data-tip="Edit Category">
+                <a 
+                  class="btn btn-xs btn-warning btn-outline hover:btn-warning" 
+                  hx-get="{% url 'products:category_update' category.id %}" 
+                  hx-target="#categoryModalContent"
+                  hx-swap="innerHTML"
+                  onclick="categoryModal.showModal()"
+                >
+                  <span class="w-4 h-4 flex items-center justify-center">
+                    {% include 'includes/svg/pen_icon.html' %}
+                  </span>
+                </a>
+              </div>
+              <div class="tooltip" data-tip="Delete Category">
+                <a 
+                  class="btn btn-xs btn-error btn-outline hover:btn-error" 
+                  hx-get="{% url 'products:category_delete' category.id %}" 
+                  hx-target="#categoryModalContent"
+                  hx-swap="innerHTML"
+                  onclick="categoryModal.showModal()"
+                >
+                  <span class="w-4 h-4 flex items-center justify-center">
+                    {% include 'includes/svg/delete_icon.html' %}
+                  </span>
+                </a>
+              </div>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="4" class="text-center text-base-content/60 py-8">
+            <div class="flex flex-col items-center gap-2">
+              <div class="w-12 h-12 rounded-full bg-base-200 flex items-center justify-center">
+                <span class="text-base-content/40 text-xl">📂</span>
+              </div>
+              <span class="font-medium">No categories found</span>
+              <span class="text-sm text-base-content/40">Start by adding your first category</span>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  
+  <div class="mt-6">
+    {% if is_paginated %}
+      <div class="join">
+        {% if page_obj.has_previous %}
+          <a href="?page=1" class="join-item btn btn-sm">« First</a>
+          <a href="?page={{ page_obj.previous_page_number }}" class="join-item btn btn-sm">‹ Prev</a>
+        {% endif %}
+        <span class="join-item btn btn-sm btn-disabled">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+        {% if page_obj.has_next %}
+          <a href="?page={{ page_obj.next_page_number }}" class="join-item btn btn-sm">Next ›</a>
+          <a href="?page={{ page_obj.paginator.num_pages }}" class="join-item btn btn-sm">Last »</a>
+        {% endif %}
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+{% comment %} Category create/update/detail/ Modal {% endcomment %}
+<dialog id="categoryModal" class="modal">
+  <div class="modal-box max-w-4xl bg-white dark:bg-gray-700 border border-base-300">
+    <form method="dialog">
+      <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+    </form>
+    <div id="categoryModalContent">
+      <span class="loading loading-spinner"></span>
+    </div>
+  </div>
+</dialog>
+
+{% endblock %}
+
+{% block extra_script %}
+<script>
+  function bindCategoryDeleteLogic() {
+    const input = document.getElementById('catConfirmText');
+    const button = document.getElementById('catDeleteButton');
+  
+    if (!input || !button) {
+      return;
+    }
+  
+    input.addEventListener('input', function () {
+      const value = input.value.trim();
+  
+      if (value === 'DELETE') {
+        button.removeAttribute('disabled');
+      } else {
+        button.setAttribute('disabled', 'true');
+      }
+    });
+  }
+
+  document.body.addEventListener('htmx:afterSwap', (event) => {
+    const modalContent = event.target;
+
+    if (modalContent.id === 'categoryModalContent' && modalContent.querySelector('[data-delete-cat-modal]')) {
+      console.log('HTMX swap completed. Binding delete logic.');
+      bindCategoryDeleteLogic();
+    }
+  });
+</script>
+{% endblock %}

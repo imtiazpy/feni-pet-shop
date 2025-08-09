@@ -1,0 +1,517 @@
+{% extends template_to_extend %}
+{% load static %}
+{% block title %}PoS Sale | Pet IMS{% endblock %}
+
+{% block content %}
+<div class="mb-6 flex justify-between items-center">
+  <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Point of Sale</h1>
+  <div class="flex gap-2">
+    <a href="{% url 'sales:sale_list' %}" class="btn btn-ghost btn-sm">
+      <span class="w-4 h-4 flex items-center justify-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 15.75L3 12m0 0l3.75-3.75M3 12h18" />
+        </svg>
+      </span>
+      Back to Sales
+    </a>
+  </div>
+</div>
+
+<div x-data="posManager()" x-init="init()">
+  <!-- Barcode Scanner Section -->
+  <div class="bg-base-100 rounded-lg shadow-sm border border-base-300 p-6 mb-6">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-xl font-semibold text-base-content flex items-center">
+        <svg class="w-6 h-6 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M12 12h-.01m9.01 0a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        Barcode Scanner
+      </h2>
+      <div class="flex items-center gap-2">
+        <div class="badge badge-success badge-sm" x-show="scannerReady">Ready</div>
+        <div class="badge badge-warning badge-sm" x-show="!scannerReady">Initializing...</div>
+      </div>
+    </div>
+
+    <div class="flex gap-4">
+      <div class="flex-1">
+        <input type="text" x-model="barcodeInput" x-ref="barcodeField" 
+               @keydown.enter="processBarcode()"
+               @input="clearMessage()"
+               class="input input-lg input-bordered w-full text-center font-mono text-xl bg-white dark:bg-gray-700" 
+               placeholder="Scan barcode or type manually..." 
+               autocomplete="off">
+      </div>
+      <div class="flex gap-2">
+        <input type="number" x-model.number="quickQuantity" min="1" max="999" 
+               class="input input-lg input-bordered w-20 text-center bg-white dark:bg-gray-700">
+        <button type="button" @click="processBarcode()" :disabled="!barcodeInput.trim()"
+                class="btn btn-primary btn-lg">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0 0l4-4m-4 4l-4-4"/>
+          </svg>
+          Add
+        </button>
+      </div>
+    </div>
+
+    <!-- Status Messages -->
+    <div x-show="message" class="mt-4">
+      <div class="alert" :class="messageType === 'success' ? 'alert-success' : 'alert-error'">
+        <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        <span x-text="message"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cart and Checkout Section -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Cart Items -->
+    <div class="lg:col-span-2">
+      <div class="bg-base-100 rounded-lg shadow-sm border border-base-300 p-6">
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-xl font-semibold text-base-content flex items-center">
+            <svg class="w-5 h-5 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5 5M7 13v6a1 1 0 001 1h9a1 1 0 001-1v-6M7 13H5.4"/>
+            </svg>
+            Cart Items
+            <span class="ml-2 badge badge-primary" x-text="cart.length" x-show="cart.length > 0"></span>
+          </h2>
+          <button type="button" @click="clearCart()" :disabled="cart.length === 0"
+                  class="btn btn-error btn-sm">
+            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+            </svg>
+            Clear All
+          </button>
+        </div>
+
+        <!-- Empty Cart State -->
+        <div x-show="cart.length === 0" class="text-center py-12 text-base-content/60">
+          <div class="flex flex-col items-center gap-3">
+            <div class="w-16 h-16 rounded-full bg-base-200 flex items-center justify-center">
+              <svg class="w-8 h-8 text-base-content/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5 5M7 13v6a1 1 0 001 1h9a1 1 0 001-1v-6M7 13H5.4"/>
+              </svg>
+            </div>
+            <span class="font-medium text-lg">Cart is empty</span>
+            <span class="text-sm text-base-content/40">Scan a barcode to start adding items</span>
+          </div>
+        </div>
+
+        <!-- Cart Items Table -->
+        <div x-show="cart.length > 0" class="overflow-x-auto">
+          <table class="table w-full text-sm">
+            <thead class="bg-base-200/50">
+              <tr>
+                <th class="font-semibold">Product</th>
+                <th class="font-semibold">Barcode</th>
+                <th class="font-semibold">Qty</th>
+                <th class="font-semibold">Unit Price</th>
+                <th class="font-semibold">Total</th>
+                <th class="font-semibold">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <template x-for="(item, index) in cart" :key="item.stock_item_id">
+                <tr class="hover:bg-base-200/30 transition-colors">
+                  <td>
+                    <div class="font-medium" x-text="item.product_name"></div>
+                    <div class="text-xs text-gray-500" x-text="'Available: ' + item.available_quantity"></div>
+                  </td>
+                  <td>
+                    <span class="font-mono text-xs bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded" x-text="item.barcode"></span>
+                  </td>
+                  <td>
+                    <div class="flex items-center gap-1">
+                      <button type="button" @click="updateQuantity(item.stock_item_id, item.quantity - 1)"
+                              :disabled="item.quantity <= 1"
+                              class="btn btn-xs btn-circle btn-outline">−</button>
+                      <input type="number" :value="item.quantity" 
+                             @change="updateQuantity(item.stock_item_id, parseInt($event.target.value))"
+                             min="1" :max="item.available_quantity"
+                             class="input input-xs input-bordered w-16 text-center">
+                      <button type="button" @click="updateQuantity(item.stock_item_id, item.quantity + 1)"
+                              :disabled="item.quantity >= item.available_quantity"
+                              class="btn btn-xs btn-circle btn-outline">+</button>
+                    </div>
+                  </td>
+                  <td class="font-semibold text-info" x-text="'৳ ' + parseFloat(item.sale_price).toFixed(2)"></td>
+                  <td class="font-bold text-success" x-text="'৳ ' + (item.quantity * parseFloat(item.sale_price)).toFixed(2)"></td>
+                  <td>
+                    <button type="button" @click="removeItem(item.stock_item_id)" 
+                            class="btn btn-error btn-xs">
+                      <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                      </svg>
+                    </button>
+                  </td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Checkout Panel -->
+    <div class="lg:col-span-1">
+      <div class="bg-base-100 rounded-lg shadow-sm border border-base-300 p-6 sticky top-6">
+        <h2 class="text-xl font-semibold text-base-content mb-4 flex items-center">
+          <svg class="w-5 h-5 mr-2 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+          </svg>
+          Checkout
+        </h2>
+
+        <!-- Payment Summary -->
+        <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 mb-6">
+          <div class="space-y-3">
+            <div class="flex justify-between text-sm">
+              <span class="text-gray-600 dark:text-gray-400">Items:</span>
+              <span class="font-medium" x-text="cart.length"></span>
+            </div>
+            <div class="flex justify-between text-sm">
+              <span class="text-gray-600 dark:text-gray-400">Subtotal:</span>
+              <span class="font-semibold text-blue-600 dark:text-blue-400" x-text="'৳ ' + subtotal.toFixed(2)"></span>
+            </div>
+            <div class="flex justify-between text-sm">
+              <span class="text-gray-600 dark:text-gray-400">Discount:</span>
+              <span class="font-semibold text-orange-600 dark:text-orange-400" x-text="'৳ ' + discountAmount.toFixed(2)"></span>
+            </div>
+            <hr class="border-gray-300 dark:border-gray-600">
+            <div class="flex justify-between text-xl font-bold">
+              <span class="text-gray-900 dark:text-gray-100">Total:</span>
+              <span class="text-green-600 dark:text-green-400" x-text="'৳ ' + finalTotal.toFixed(2)"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Discount Input -->
+        <div class="form-control mb-4">
+          <label class="label">
+            <span class="label-text font-medium">Discount (৳)</span>
+          </label>
+          <input type="number" x-model.number="discountAmount" step="0.01" min="0" :max="subtotal"
+                 class="input input-bordered bg-white dark:bg-gray-700" placeholder="0.00">
+        </div>
+
+        <!-- Notes -->
+        <div class="form-control mb-6">
+          <label class="label">
+            <span class="label-text font-medium">Notes (Optional)</span>
+          </label>
+          <textarea x-model="notes" class="textarea textarea-bordered bg-white dark:bg-gray-700" 
+                    placeholder="Sale notes..." rows="2"></textarea>
+        </div>
+
+        <!-- Checkout Button -->
+        <button type="button" @click="finalizeSale()" :disabled="cart.length === 0 || processing"
+                class="btn btn-success btn-lg w-full">
+          <svg x-show="!processing" class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          <span x-show="processing" class="loading loading-spinner loading-sm mr-2"></span>
+          <span x-text="processing ? 'Processing...' : 'Complete Sale'"></span>
+        </button>
+
+        <!-- Quick Actions -->
+        <div class="grid grid-cols-2 gap-2 mt-3">
+          <button type="button" @click="focusBarcode()" class="btn btn-outline btn-sm">
+            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M12 12h-.01m9.01 0a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            Focus Scanner
+          </button>
+          <button type="button" @click="clearCart()" :disabled="cart.length === 0" class="btn btn-outline btn-sm">
+            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4l16 16m0 0V8a2 2 0 00-2-2H8m8 12H6a2 2 0 01-2-2V8"/>
+            </svg>
+            Clear Cart
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_script %}
+<script>
+function posManager() {
+  return {
+    cart: [],
+    barcodeInput: '',
+    quickQuantity: 1,
+    discountAmount: 0,
+    notes: '',
+    message: '',
+    messageType: 'success',
+    scannerReady: false,
+    processing: false,
+
+    init() {
+      // Load initial cart from session
+      this.loadCart();
+      
+      // Auto-focus barcode input
+      this.$nextTick(() => {
+        this.focusBarcode();
+        this.scannerReady = true;
+      });
+      
+      // Set up keyboard shortcuts
+      document.addEventListener('keydown', (e) => {
+        // F1 - Focus barcode field
+        if (e.key === 'F1') {
+          e.preventDefault();
+          this.focusBarcode();
+        }
+        // F2 - Clear cart
+        if (e.key === 'F2') {
+          e.preventDefault();
+          this.clearCart();
+        }
+        // F12 - Complete sale
+        if (e.key === 'F12') {
+          e.preventDefault();
+          if (this.cart.length > 0) {
+            this.finalizeSale();
+          }
+        }
+      });
+    },
+
+    get subtotal() {
+      return this.cart.reduce((sum, item) => sum + (item.quantity * parseFloat(item.sale_price)), 0);
+    },
+
+    get finalTotal() {
+      return Math.max(0, this.subtotal - this.discountAmount);
+    },
+
+    async loadCart() {
+      // Load cart from server session
+      this.cart = {{ cart|safe }} || [];
+    },
+
+    focusBarcode() {
+      this.$refs.barcodeField.focus();
+      this.$refs.barcodeField.select();
+    },
+
+    clearMessage() {
+      this.message = '';
+    },
+
+    showMessage(msg, type = 'success') {
+      this.message = msg;
+      this.messageType = type;
+      
+      // Auto-hide after 3 seconds
+      setTimeout(() => {
+        this.message = '';
+      }, 3000);
+    },
+
+    async processBarcode() {
+      if (!this.barcodeInput.trim()) {
+        this.showMessage('Please enter a barcode', 'error');
+        return;
+      }
+
+      try {
+        const formData = new FormData();
+        formData.append('action', 'add_item');
+        formData.append('barcode', this.barcodeInput.trim());
+        formData.append('quantity', this.quickQuantity);
+        formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+
+        const response = await fetch('', {
+          method: 'POST',
+          body: formData,
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+          }
+        });
+
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+          this.cart = data.cart;
+          this.showMessage(data.message, 'success');
+          this.barcodeInput = '';
+          this.quickQuantity = 1;
+          this.focusBarcode();
+        } else {
+          this.showMessage(data.message, 'error');
+        }
+      } catch (error) {
+        this.showMessage('Error processing barcode', 'error');
+        console.error('Error:', error);
+      }
+    },
+
+    async updateQuantity(stockItemId, newQuantity) {
+      if (newQuantity < 1) return;
+
+      try {
+        const formData = new FormData();
+        formData.append('action', 'update_quantity');
+        formData.append('stock_item_id', stockItemId);
+        formData.append('quantity', newQuantity);
+        formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+
+        const response = await fetch('', {
+          method: 'POST',
+          body: formData,
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+          }
+        });
+
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+          this.cart = data.cart;
+          this.showMessage(data.message, 'success');
+        } else {
+          this.showMessage(data.message, 'error');
+        }
+      } catch (error) {
+        this.showMessage('Error updating quantity', 'error');
+        console.error('Error:', error);
+      }
+    },
+
+    async removeItem(stockItemId) {
+      try {
+        const formData = new FormData();
+        formData.append('action', 'remove_item');
+        formData.append('stock_item_id', stockItemId);
+        formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+
+        const response = await fetch('', {
+          method: 'POST',
+          body: formData,
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+          }
+        });
+
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+          this.cart = data.cart;
+          this.showMessage(data.message, 'success');
+        } else {
+          this.showMessage(data.message, 'error');
+        }
+      } catch (error) {
+        this.showMessage('Error removing item', 'error');
+        console.error('Error:', error);
+      }
+    },
+
+    async clearCart() {
+      if (this.cart.length === 0) return;
+      
+      if (!confirm('Are you sure you want to clear the entire cart?')) return;
+
+      // Remove all items one by one
+      for (const item of [...this.cart]) {
+        await this.removeItem(item.stock_item_id);
+      }
+      
+      this.focusBarcode();
+    },
+
+    async finalizeSale() {
+      if (this.cart.length === 0) {
+        this.showMessage('Cart is empty', 'error');
+        return;
+      }
+
+      if (this.discountAmount > this.subtotal) {
+        this.showMessage('Discount cannot exceed subtotal', 'error');
+        return;
+      }
+
+      this.processing = true;
+
+      try {
+        const formData = new FormData();
+        formData.append('action', 'finalize_sale');
+        formData.append('discount_amount', this.discountAmount);
+        formData.append('notes', this.notes);
+        formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+
+        const response = await fetch('', {
+          method: 'POST',
+          body: formData,
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+          }
+        });
+
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+          this.showMessage(data.message, 'success');
+          
+          // Reset form
+          this.cart = [];
+          this.discountAmount = 0;
+          this.notes = '';
+          
+          // Redirect after short delay
+          setTimeout(() => {
+            if (data.redirect_url) {
+              window.location.href = data.redirect_url;
+            }
+          }, 1500);
+        } else {
+          this.showMessage(data.message, 'error');
+        }
+      } catch (error) {
+        this.showMessage('Error completing sale', 'error');
+        console.error('Error:', error);
+      } finally {
+        this.processing = false;
+      }
+    }
+  }
+}
+</script>
+
+<!-- Add CSRF token -->
+{% csrf_token %}
+
+<style>
+[x-cloak] { 
+  display: none !important; 
+}
+
+/* Focus styles for barcode input */
+input[x-ref="barcodeField"]:focus {
+  @apply ring-4 ring-blue-200 dark:ring-blue-800;
+}
+
+/* Scanner ready pulse animation */
+.badge-success {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+</style>
+{% endblock %}

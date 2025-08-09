@@ -1,0 +1,37 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Pet IMS{% endblock %}</title>
+
+  <link rel="icon" type="image/png" href="{% static 'favicon.png' %}">
+
+  <link rel="stylesheet" href="{% static 'css/daisyui/daisyui.min.css' %}">
+
+  <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+  <link rel="stylesheet" href="{% static 'css/utility.css' %}">
+
+
+  {# Block for extra CSS #}
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+  <header>
+    {% include "includes/_navbar.html" %}
+  </header>
+  <main id="main-content" role="main">
+    {% block content %}
+    {% endblock %}
+  </main>
+  {% include "includes/_footer.html" %}
+
+
+  <script src="{% static 'js/tailwindcss/index.global.js' %}"></script>
+
+  {# Block for extra JS #}
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

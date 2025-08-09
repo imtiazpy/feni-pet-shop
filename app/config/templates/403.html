@@ -1,0 +1,14 @@
+    <!-- templates/403.html -->
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Permission Denied</title>
+    </head>
+    <body>
+        <h1>403 Forbidden</h1>
+        <p>You do not have permission to access this page.</p>
+        {% if exception %}
+            <p>Details: {{ exception }}</p>
+        {% endif %}
+    </body>
+    </html>
