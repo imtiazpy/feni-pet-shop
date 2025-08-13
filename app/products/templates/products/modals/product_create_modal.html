@@ -56,17 +56,6 @@
     </div>
   </div>
 
-  <div class="form-control w-full">
-    <label class="label">
-      <span class="label-text font-semibold text-gray-700 dark:text-gray-300">Expiration Date</span>
-    </label>
-    <input 
-      name="expiration_date" 
-      type="date" 
-      class="input input-bordered w-full bg-white dark:bg-gray-700  border-gray-300 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400"
-    >
-  </div>
-
   <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
     <div class="form-control w-full">
       <label class="label">
@@ -79,21 +68,6 @@
         <option value="" class="text-gray-500 dark:text-gray-400">-- Select Category --</option>
         {% for category in categories %}
         <option value="{{ category.id }}" class="text-gray-900 dark:text-gray-100">{{ category.name }}</option>
-        {% endfor %}
-      </select>
-    </div>
-
-    <div class="form-control w-full">
-      <label class="label">
-        <span class="label-text font-semibold text-gray-700 dark:text-gray-300">Supplier</span>
-      </label>
-      <select 
-        name="supplier" 
-        class="select select-bordered w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400"
-      >
-        <option value="" class="text-gray-500 dark:text-gray-400">-- Select Supplier --</option>
-        {% for supplier in suppliers %}
-        <option value="{{ supplier.id }}" class="text-gray-900 dark:text-gray-100">{{ supplier.name }}</option>
         {% endfor %}
       </select>
     </div>

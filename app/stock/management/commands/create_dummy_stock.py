@@ -46,7 +46,8 @@ class Command(BaseCommand):
             try:
                 # Randomly select dependencies
                 product = random.choice(products)
-                location = random.choice(locations)
+                # location = random.choice(locations)
+                location = StockLocation.objects.get(name="Shelf-A")
                 supplier = random.choice(suppliers)
                 user = random.choice(users)
                 

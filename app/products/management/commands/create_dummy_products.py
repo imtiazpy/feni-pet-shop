@@ -25,10 +25,8 @@ class Command(BaseCommand):
             product = Product.objects.create(
                 name=name,
                 cost_price=round(random.uniform(50, 300), 2),
-                sell_price=round(random.uniform(301, 600), 2),
-                expiation_date=fake.date_between(start_date="+30d", end_date="+365d"),
+                sale_price=round(random.uniform(301, 600), 2),
                 category=random.choice(categories),
-                supplier=random.choice(suppliers)
             )
             product.save()
 

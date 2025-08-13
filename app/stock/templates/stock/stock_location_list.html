@@ -1,0 +1,181 @@
+{% extends template_to_extend %} 
+{% load static %} 
+{% block title %}Stock Locations | imPoS{% endblock %}
+
+
+{% block content %}
+<div class="mb-6 flex justify-between items-center">
+  <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Stock Locations</h1>
+
+  <div class="flex items-center gap-3">
+    <button class="btn btn-primary btn-sm">
+      Export {% include 'includes/svg/export_icon.html' %}
+    </button>
+
+    {% if request.user.role == 'admin' or request.user.role == 'inventory_manager' %}
+    <a 
+      class="btn btn-primary btn-sm" 
+      title="Add Stock Location"
+      hx-get="{% url 'stock:stocklocation_create' %}" 
+      hx-target="#stLocationModalContent"
+      hx-swap="innerHTML"
+      onclick="stLocationModal.showModal()"
+    >
+      Add Location
+      <span class="w-4 h-4 flex items-center justify-center">
+        {% include 'includes/svg/plus_icon.html' %}
+      </span>
+    </a>
+    {% endif %}
+  </div>
+</div>
+
+<div class="overflow-x-auto bg-base-100 rounded-lg shadow-lg border border-base-300">
+  <table class="table w-full text-sm">
+    <thead class="bg-base-200/50 border-b border-base-300">
+      <tr class="text-base-content/90">
+        <th class="font-semibold">#</th>
+        <th class="font-semibold">Name</th>
+        <th class="font-semibold">Stock Items</th>
+        <th class="font-semibold">Total Stock</th>
+        <th class="font-semibold">Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for location in stock_locations %}
+      <tr class="hover:bg-base-200 transition-colors duration-200 border-b border-base-300/50 {% cycle 'bg-base-100' 'bg-base-200/20' %}">
+        <td class="text-base-content/80">{{ forloop.counter }}</td>
+        <td class="text-base-content font-mono text-xs">{{ location.name }}</td>
+        <td class="text-warning font-medium">{{ location.get_stock_items|default:"—" }}</td>
+        <td class="text-success font-semibold">{{ location.get_stock_quantities }}</td>
+        <td>
+          <div class="flex gap-1">
+            <div class="tooltip" data-tip="View Details">
+              <a 
+                class="btn btn-xs btn-info btn-outline hover:btn-info" 
+                hx-get="{% url 'stock:stocklocation_detail' location.id %}" 
+                hx-target="#stLocationModalContent"
+                hx-swap="innerHTML"
+                onclick="stLocationModal.showModal()"
+              >
+                <span class="w-4 h-4 flex items-center justify-center">
+                  {% include 'includes/svg/circle_info_icon.html' %}
+                </span>
+              </a>
+            </div>
+            {% if request.user.role == 'admin' or request.user.role == 'inventory_manager' %}
+            <div class="tooltip" data-tip="Edit Location">
+              <a 
+                class="btn btn-xs btn-warning btn-outline hover:btn-warning" 
+                hx-get="{% url 'stock:stocklocation_update' location.id %}" 
+                hx-target="#stLocationModalContent"
+                hx-swap="innerHTML"
+                onclick="stLocationModal.showModal()"
+              >
+                <span class="w-4 h-4 flex items-center justify-center">
+                  {% include 'includes/svg/pen_icon.html' %}
+                </span>
+              </a>
+            </div>
+            <div class="tooltip" data-tip="Delete Location">
+              <a 
+                class="btn btn-xs btn-error btn-outline hover:btn-error" 
+                hx-get="{% url 'stock:stocklocation_delete' location.id %}"
+                hx-target="#stLocationModalContent"
+                hx-swap="innerHTML"
+                onclick="stLocationModal.showModal()"
+              >
+                <span class="w-4 h-4 flex items-center justify-center">
+                  {% include 'includes/svg/delete_icon.html' %}
+                </span>
+              </a>
+            </div>
+            {% endif %}
+          </div>
+        </td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="11" class="text-center text-base-content/60 py-8">
+          <div class="flex flex-col items-center gap-2">
+            <div class="w-12 h-12 rounded-full bg-base-200 flex items-center justify-center">
+              <span class="text-base-content/40 text-xl">📦</span>
+            </div>
+            <span class="font-medium">No stock locations found</span>
+            <span class="text-sm text-base-content/40">Start by adding your first stock location</span>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- Pagination -->
+{% if is_paginated %}
+<div class="mt-6 flex justify-center">
+  <div class="join bg-base-100 shadow-sm rounded-lg border border-base-300">
+    {% if page_obj.has_previous %}
+      <a href="?page=1" class="join-item btn btn-sm btn-ghost hover:bg-base-200">First</a>
+      <a href="?page={{ page_obj.previous_page_number }}" class="join-item btn btn-sm btn-ghost hover:bg-base-200">‹ Prev</a>
+    {% endif %}
+    <span class="join-item btn btn-sm btn-active">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}
+      <a href="?page={{ page_obj.next_page_number }}" class="join-item btn btn-sm btn-ghost hover:bg-base-200">Next ›</a>
+      <a href="?page={{ page_obj.paginator.num_pages }}" class="join-item btn btn-sm btn-ghost hover:bg-base-200">Last</a>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+
+{% comment %} StockLocation create/update/detail/delete Modal {% endcomment %}
+
+<dialog id="stLocationModal" class="modal">
+  <div class="modal-box max-w-4xl bg-white dark:bg-gray-700 border border-base-300">
+    <form method="dialog">
+      <button class="btn btn-sm btn-circle btn-ghost absolute right-3 top-3 hover:bg-base-200">✕</button>
+    </form>
+    <div id="stLocationModalContent" class="mt-4">
+      <div class="flex items-center justify-center py-8">
+        <span class="loading loading-spinner loading-md text-primary"></span>
+      </div>
+    </div>
+  </div>
+</dialog>
+
+{% endblock %}
+
+{% block extra_script %}
+<script>
+  function bindLocationDeleteLogic() {
+    const input = document.getElementById('locationConfirmText');
+    const button = document.getElementById('locationDeleteButton');
+  
+    if (!input || !button) {
+      return;
+    }
+  
+    input.addEventListener('input', function () {
+      const value = input.value.trim();
+
+      console.log(value)
+  
+      if (value === 'DELETE') {
+        button.removeAttribute('disabled');
+      } else {
+        button.setAttribute('disabled', 'true');
+      }
+    });
+  }
+
+  document.body.addEventListener('htmx:afterSwap', (event) => {
+    const modalContent = event.target;
+
+    if (modalContent.id === 'stLocationModalContent' && modalContent.querySelector('[data-delete-location-modal]')) {
+      console.log('HTMX swap completed. Binding stock delete logic.');
+      bindLocationDeleteLogic();
+    }
+  });
+</script>
+  
+{% endblock %}

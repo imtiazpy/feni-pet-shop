@@ -1,0 +1,133 @@
+<div class="space-y-6">
+  <!-- StockLocation Header -->
+  <div class="text-center border-b border-gray-200 dark:border-gray-600 pb-4">
+    <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">{{ stock_location.name }}</h2>
+    <div class="flex justify-center gap-2">
+      <span class="badge badge-primary badge-outline text-xs">Stock Location Details</span>
+    </div>
+  </div>
+
+  <!-- StockLocation Information -->
+  <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
+    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
+      <svg class="w-5 h-5 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      Stock Location Information
+    </h3>
+
+    <div class="grid grid-cols-1 gap-4 text-sm">
+      <div class="space-y-1">
+        <p class="font-semibold text-gray-700 dark:text-gray-300">Stock Location Name:</p>
+        <p
+          class="text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 px-3 py-2 rounded border border-gray-200 dark:border-gray-600">
+          {{ stock_location.name }}
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- StockLocation Description -->
+  {% if stock_location.description %}
+  <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
+    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center">
+      <svg class="w-5 h-5 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7" />
+      </svg>
+      Description
+    </h3>
+    <p
+      class="text-gray-700 dark:text-gray-300 leading-relaxed bg-white dark:bg-gray-700 p-3 rounded border border-gray-200 dark:border-gray-600">
+      {{ stock_location.description }}
+    </p>
+  </div>
+  {% endif %}
+
+  <!-- Associated Stocks -->
+  <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
+    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
+      <svg class="w-5 h-5 mr-2 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+      </svg>
+      Associated Stock Items
+      <span class="ml-2 text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded-full">
+        {{ stock_location.stock_items.all.count }}
+      </span>
+    </h3>
+
+    {% if stock_location.stock_items.all %}
+    <div class="space-y-3 max-h-64 overflow-y-auto">
+      {% for stock_item in stock_location.stock_items.all %}
+      <div
+        class="bg-white dark:bg-gray-700 rounded-lg p-3 border border-gray-200 dark:border-gray-600 hover:shadow-md transition-shadow">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-3">
+            {% if stock_item.product.image %}
+            <img src="{{ stock_item.product.image.url }}" alt="Product"
+              class="w-10 h-10 rounded object-cover border border-gray-300 dark:border-gray-600">
+            {% else %}
+            <div class="w-10 h-10 rounded bg-gray-200 dark:bg-gray-600 flex items-center justify-center">
+              <svg class="w-5 h-5 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor"
+                viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+              </svg>
+            </div>
+            {% endif %}
+
+            <div>
+              <h4 class="font-medium text-gray-900 dark:text-gray-100 text-sm">{{ stock_item.product.name }}</h4>
+              <p class="text-xs text-gray-500 dark:text-gray-400 font-mono">{{ stock_item.product.barcode|default:"No barcode" }}
+              </p>
+            </div>
+          </div>
+
+          <div>
+            <p class="font-semibold text-gray-900 dark:text-gray-100">{{ stock_item.quantity }} items left</p>
+          </div>
+
+          <div class="text-right">
+            <p class="font-semibold text-green-600 dark:text-green-400">৳ {{ stock_item.sale_price|floatformat:2 }}</p>
+            {% if stock_item.cost_price %}
+            <p class="text-xs text-orange-600 dark:text-orange-400">Cost: ৳ {{ stock_item.cost_price|floatformat:2 }}</p>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center py-8">
+      <div class="w-16 h-16 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center mx-auto mb-3">
+        <svg class="w-8 h-8 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+        </svg>
+      </div>
+      <p class="text-gray-500 dark:text-gray-400 text-sm font-medium">No stock items in this location</p>
+      <p class="text-gray-400 dark:text-gray-500 text-xs">Stock Items will appear here when added to this location</p>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Action Buttons -->
+  <div class="flex gap-3 pt-4 border-t border-gray-200 dark:border-gray-600">
+    {% if request.user.role == 'admin' or request.user.role == 'inventory_manager' %}
+    <button
+      class="btn btn-primary flex-1 bg-blue-600 hover:bg-blue-700 border-blue-600 hover:border-blue-700 text-white"
+      hx-get="#" hx-target="#stLocationModalContent" hx-swap="innerHTML">
+      <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+      </svg>
+      Edit Stock Location
+    </button>
+    {% endif %}
+    <button type="button" onclick="stLocationModal.close()"
+      class="btn btn-ghost flex-1 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600">
+      Close
+    </button>
+  </div>
+</div>

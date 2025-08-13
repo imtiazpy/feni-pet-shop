@@ -15,7 +15,7 @@ class Command(BaseCommand):
         for _ in range(total):
             Supplier.objects.create(
                 name=fake.company(),
-                contact_phone=fake.phone_number(),
-                contact_email=fake.email(),
+                phone=fake.phone_number(),
+                email=fake.email(),
             )
         self.stdout.write(self.style.SUCCESS(f"✅ Created {total} dummy suppliers."))

@@ -93,6 +93,15 @@
             Stocks
           </a>
           <a 
+            @click="setActivePage('stocks/locations')"
+            hx-get="{% url 'stock:stocklocation_list' %}"
+            hx-target="#mainContent"
+            hx-push-url="true"
+            class="block w-full cursor-pointer text-left px-3 py-2 text-sm rounded-lg transition-colors"
+            :class="currentPage === 'stocks/locations' ? 'bg-primary/10 text-primary' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'">
+            Stock Locations
+          </a>
+          <a 
             @click="setActivePage('low-stock')"
             class="block w-full cursor-pointer text-left px-3 py-2 text-sm rounded-lg transition-colors"
             :class="currentPage === 'low-stock' ? 'bg-primary/10 text-primary' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'">

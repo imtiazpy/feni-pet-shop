@@ -1,12 +1,11 @@
-from django.shortcuts import render
+from django.db import connection
 from django.http import HttpResponseRedirect
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.urls import reverse_lazy
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
-from django.shortcuts import get_object_or_404
-from django.db.models import Q
+from django.db.models import Prefetch
 from core.mixins import RoleRequiredMixin
 from stock.models import StockItem, StockItemTracking, StockLocation
 from products.models import Product, Supplier
@@ -151,6 +150,96 @@ class StockItemDeleteView(LoginRequiredMixin, PermissionRequiredMixin, RoleRequi
         )
         messages.success(self.request, f"Deleted {self.object.product.name} (Batch: {self.object.batch_number})")
         return super().form_valid(form)
+
+
+
+
+class StockLocationListView(LoginRequiredMixin, ListView):
+    model = StockLocation
+    template_name = "stock/stock_location_list.html"
+    context_object_name = 'stock_locations'
+    paginate_by = 20
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        return queryset.order_by('-created_at')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        if self.request.headers.get('HX-Request'):
+            context['template_to_extend'] = 'partials/base_empty.html'
+        else:
+            context['template_to_extend'] = 'new_dash_base.html'
+        return context
+
+
+class StockLocationCreateView(LoginRequiredMixin, RoleRequiredMixin, CreateView):
+    model = StockLocation
+    template_name = "stock/modals/stock_location_create_modal.html"
+    fields = ['name', 'description']
+    success_url = reverse_lazy('stock:stocklocation_list')
+    allowed_roles = ['admin', 'inventory_manager']
+
+    def form_valid(self, form):
+        messages.success(self.request, "Stock location created successfully.")
+        return super().form_valid(form)
+
+    def form_invalid(self, form):
+        messages.error(self.request, "There was an error creating the stock location. Please check the form and try again.")
+        return super().form_invalid(form)
+    
+
+class StockLocationDetailView(LoginRequiredMixin, DetailView):
+    model = StockLocation
+    template_name = 'stock/modals/stock_location_detail_modal.html'
+    context_object_name = 'stock_location'
+
+    def get_queryset(self):
+        return (
+            StockLocation.objects
+            .prefetch_related(
+                Prefetch(
+                    'stock_items',
+                    queryset=StockItem.objects.select_related('product')
+                )
+            )
+        )
+
+
+class StockLocationUpdateView(LoginRequiredMixin, RoleRequiredMixin, UpdateView):
+    model = StockLocation
+    fields = ['name', 'description']
+    template_name = "stock/modals/stock_location_update_modal.html"
+    context_object_name = 'stock_location'
+    allowed_roles = ['admin', 'inventory_manager', 'cashier']
+    success_url = reverse_lazy('stock:stocklocation_list')
+
+    def form_valid(self, form):
+        messages.success(self.request, "Stock location updated successfully")
+        return super().form_valid(form)
+    
+    def form_invalid(self, form):
+        messages.error(self.request, "There was an error updating the stock location. Please check the form and try again.")
+        return super().form_invalid(form)
+    
+
+class StockLocationDeleteView(LoginRequiredMixin, PermissionRequiredMixin, RoleRequiredMixin, DeleteView):
+    model = StockLocation
+    template_name = 'stock/modals/stock_location_confirm_delete.html'
+    permission_required = 'stock.delete_stocklocation'
+    allowed_roles = ['admin', 'inventory_manager']
+    context_object_name = 'stock_location'
+    success_url = reverse_lazy('stock:stocklocation_list')
+
+    def form_valid(self, form):
+        messages.success(self.request, "Stock location deleted successfully")
+        return super().form_valid(form)
+    
+    def form_invalid(self, form):
+        messages.error(self.request, "There was an error deleting the stock location. Please try again.")
+        return super().form_invalid(form)
+
 
 
 
