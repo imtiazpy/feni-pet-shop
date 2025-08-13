@@ -6,6 +6,7 @@ app_name = 'stock'
 
 urlpatterns = [
     path('', views.StockItemListView.as_view(), name="stockitem_list"),
+    path('partials/', views.StockItemListPartialView.as_view(), name="stockitem_list_partial"),
     path('create/', views.StockItemCreateView.as_view(), name="stockitem_create"),
     path('<int:pk>/', views.StockItemDetailView.as_view(), name="stockitem_detail"),
     path('<int:pk>/update/', views.StockItemUpdateView.as_view(), name="stockitem_update"),

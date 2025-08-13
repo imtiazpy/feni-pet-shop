@@ -6,6 +6,7 @@ app_name = 'products'
 
 urlpatterns = [
     path('', views.ProductListView.as_view(), name='product_list'),
+    path('partials/', views.ProductListPartialView.as_view(), name='product_list_partial'),
     path('create/', views.ProductCreateView.as_view(), name='product_create'),
     path('<int:pk>/', views.ProductDetailView.as_view(), name='product_detail'),
     path('<int:pk>/update/', views.ProductUpdateView.as_view(), name='product_update'),
@@ -19,6 +20,7 @@ urlpatterns = [
     path('categories/<int:pk>/delete/', views.CategoryDeleteView.as_view(), name='category_delete'),
 
     path('suppliers/', views.SupplierListView.as_view(), name='supplier_list'),
+    path('suppliers/partial/', views.SupplierListPartialView.as_view(), name='supplier_list_partial'),
     path('suppliers/create/', views.SupplierCreateView.as_view(), name='supplier_create'),
     path('suppliers/<int:pk>/', views.SupplierDetailView.as_view(), name='supplier_detail'),
     path('suppliers/<int:pk>/update/', views.SupplierUpdateView.as_view(), name='supplier_update'),

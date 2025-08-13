@@ -1,14 +1,36 @@
-from django.db import connection
 from django.http import HttpResponseRedirect
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.urls import reverse_lazy
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
-from django.db.models import Prefetch
+from django.db.models import Prefetch, Q
 from core.mixins import RoleRequiredMixin
 from stock.models import StockItem, StockItemTracking, StockLocation
 from products.models import Product, Supplier
+
+
+class StockItemListPartialView(LoginRequiredMixin, ListView):
+    """For search result"""
+    model = StockItem
+    template_name = 'stock/partials/stockitem_list_partial.html'
+    context_object_name = 'stock_items'
+    paginate_by = 20
+
+    def get_queryset(self):
+        """Optimize query"""
+        queryset = super().get_queryset().select_related('product', 'stock_location', 'supplier', 'created_by')
+        search = self.request.GET.get('search')
+
+        if search:
+            queryset = queryset.filter(
+                Q(product__name__icontains=search) |
+                Q(stock_location__name__icontains=search) |
+                Q(supplier__name__icontains=search)
+            )
+        return queryset
+
+
 
 class StockItemListView(LoginRequiredMixin, ListView):
     model = StockItem

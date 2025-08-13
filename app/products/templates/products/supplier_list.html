@@ -27,90 +27,33 @@
     {% endif %}
   </div>
 </div>
+
+<!-- Search -->
+<div class="mb-6 bg-base-100 rounded-lg shadow-sm border border-base-300 p-4">
+  <form method="get" class="flex flex-wrap gap-4 items-end">
+    <div class="form-control w-64">
+      <label class="label" for="search">
+        <span class="label-text font-medium">Search Supplier</span>
+      </label>
+      <input 
+        type="text" 
+        id="search" 
+        name="search" 
+        value="{{ request.GET.search }}" 
+        placeholder="Type supplier name or email..." 
+        class="input input-bordered input-sm w-full bg-white dark:bg-gray-700"
+        autocomplete="off"
+        hx-get="{% url 'products:supplier_list_partial' %}"
+        hx-trigger="keyup changed delay:500ms"
+        hx-target="#supplier-list-container"
+        hx-include="[name='search']"
+      />
+    </div>
+  </form>
+</div>
   
-<div class="overflow-x-auto bg-base-100 rounded-lg shadow-lg border border-base-300">
-  <table class="table w-full text-sm">
-    <thead class="bg-base-200/50 border-b border-base-300">
-      <tr class="text-base-content/90">
-        <th class="font-semibold">#</th>
-        <th class="font-semibold">Name</th>
-        <th class="font-semibold">Email</th>
-        <th class="font-semibold">Phone</th>
-        <th class="font-semibold">Products</th>
-        <th>Total Products</th>
-        <th class="font-semibold">Action</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for supplier in suppliers %}
-      <tr class="hover:bg-base-200 transition-colors duration-200 border-b border-base-300/50 {% cycle 'bg-base-100' 'bg-base-200/20' %}">
-        <td class="text-base-content/80">{{ forloop.counter }}</td>
-        <td class="font-medium text-base-content">{{ supplier.name }}</td>
-        <td class="text-base-content">{{ supplier.email|default:"—" }}</td>
-        <td class="text-base-content">{{ supplier.phone|default:"—" }}</td>
-        <td class="text-primary font-semibold">{{ supplier.total_product_items }}</td>
-        <td class="text-warning font-semibold">{{ supplier.get_product_quantities }}</td>
-        <td>
-          <div class="flex gap-1">
-            <div class="tooltip" data-tip="View Details">
-              <a 
-                class="btn btn-xs btn-info btn-outline hover:btn-info" 
-                hx-get="{% url 'products:supplier_detail' supplier.id %}" 
-                hx-target="#supplierModalContent"
-                hx-swap="innerHTML"
-                onclick="supplierModal.showModal()"
-              >
-                <span class="w-4 h-4 flex items-center justify-center">
-                  {% include 'includes/svg/circle_info_icon.html' %}
-                </span>
-              </a>
-            </div>
-            {% if request.user.role == 'admin' or request.user.role == 'inventory_manager' %}
-            <div class="tooltip" data-tip="Edit Supplier">
-              <a 
-                class="btn btn-xs btn-warning btn-outline hover:btn-warning" 
-                hx-get="{% url 'products:supplier_update' supplier.id %}" 
-                hx-target="#supplierModalContent"
-                hx-swap="innerHTML"
-                onclick="supplierModal.showModal()"
-              >
-                <span class="w-4 h-4 flex items-center justify-center">
-                  {% include 'includes/svg/pen_icon.html' %}
-                </span>
-              </a>
-            </div>
-            <div class="tooltip" data-tip="Delete Supplier">
-              <a 
-                class="btn btn-xs btn-error btn-outline hover:btn-error" 
-                hx-get="{% url 'products:supplier_delete' supplier.id %}" 
-                hx-target="#supplierModalContent"
-                hx-swap="innerHTML"
-                onclick="supplierModal.showModal()"
-              >
-                <span class="w-4 h-4 flex items-center justify-center">
-                  {% include 'includes/svg/delete_icon.html' %}
-                </span>
-              </a>
-            </div>
-            {% endif %}
-          </div>
-        </td>
-      </tr>
-      {% empty %}
-      <tr>
-        <td colspan="6" class="text-center text-base-content/60 py-8">
-          <div class="flex flex-col items-center gap-2">
-            <div class="w-12 h-12 rounded-full bg-base-200 flex items-center justify-center">
-              <span class="text-base-content/40 text-xl">🏢</span>
-            </div>
-            <span class="font-medium">No suppliers found</span>
-            <span class="text-sm text-base-content/40">Start by adding your first supplier</span>
-          </div>
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+<div id="supplier-list-container" class="overflow-x-auto bg-base-100 rounded-lg shadow-lg border border-base-300">
+  {% include 'products/partials/supplier_list_partial.html' %}
 </div>
 
 <!-- Pagination -->

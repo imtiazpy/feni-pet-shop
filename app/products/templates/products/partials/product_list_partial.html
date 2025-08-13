@@ -1,0 +1,121 @@
+<table class="table w-full text-sm">
+  <thead class="bg-base-200/50 border-b border-base-300">
+    <tr class="text-base-content/90">
+      <th class="font-semibold">#</th>
+      <th class="font-semibold">Name</th>
+      <th class="font-semibold">Barcode</th>
+      <th class="font-semibold">Sale Price</th>
+      <th class="font-semibold">Cost Price</th>
+      <th class="font-semibold">Stock Status</th>
+      <th class="font-semibod">Quantity</th>
+      <th class="font-semibold">Category</th>
+      <th class="font-semibold">Image</th>
+      <th class="font-semibold">Action</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for product in products %}
+    <tr
+      class="hover:bg-base-200 transition-colors duration-200 border-b border-base-300/50 {% cycle 'bg-base-100' 'bg-base-200/20' %}">
+      <td class="text-base-content/80">{{ forloop.counter }}</td>
+      <td class="font-medium text-base-content">{{ product.name }}</td>
+      <td class="text-base-content font-mono text-xs">{{ product.barcode }}</td>
+      <td class="text-success font-semibold">{{ product.sale_price }}</td>
+      <td class="text-warning font-medium">{{ product.cost_price }}</td>
+      <td class="text-base-content">
+        {% comment %} TODO: we have to handle it efficiently {% endcomment %}
+        {% if product.is_in_stock %}
+        <span class="badge badge-success badge-sm">In Stock</span>
+        {% else %}
+        <span class="badge badge-error badge-sm">Out of Stock</span>
+        {% endif %}
+      </td>
+      <td class="text-success font-semibold">{{ product.get_total_stock }}</td>
+      <td class="text-base-content">{{ product.category.name | default:"—" }}</td>
+      <td>
+        {% if product.image %}
+        <div class="avatar">
+          <div class="w-10 h-10 rounded-lg border border-base-300 overflow-hidden">
+            <img src="{{ product.image.url }}" alt="Product" class="w-full h-full object-cover" />
+          </div>
+        </div>
+        {% else %}
+        <div class="w-10 h-10 rounded-lg bg-base-200 flex items-center justify-center">
+          <span class="text-base-content/40 text-xs">—</span>
+        </div>
+        {% endif %}
+      </td>
+      <td>
+        <div class="flex gap-1">
+          <div class="tooltip" data-tip="View Details">
+            <a 
+              class="btn btn-xs btn-info btn-outline hover:btn-info"
+              hx-get="{% url 'products:product_detail' product.id %}" 
+              hx-target="#productModalContent"
+              hx-swap="innerHTML" 
+              onclick="productModal.showModal()"
+            >
+              <span class="w-4 h-4 flex items-center justify-center">
+                {% include 'includes/svg/circle_info_icon.html' %}
+              </span>
+            </a>
+          </div>
+          {% if request.user.role == 'admin' or request.user.role == 'inventory_manager' %}
+          <div class="tooltip" data-tip="Edit Product">
+            <a 
+              class="btn btn-xs btn-warning btn-outline hover:btn-warning"
+              hx-get="{% url 'products:product_update' product.id %}" 
+              hx-target="#productModalContent"
+              hx-swap="innerHTML" 
+              onclick="productModal.showModal()"
+            >
+              <span class="w-4 h-4 flex items-center justify-center">
+                {% include 'includes/svg/pen_icon.html' %}
+              </span>
+            </a>
+          </div>
+          <div class="tooltip" data-tip="Update Price">
+            <a 
+              class="btn btn-xs btn-accent btn-outline hover:btn-accent"
+              hx-get="{% url 'products:product_price_update' product.id %}" 
+              hx-target="#productModalContent"
+              hx-swap="innerHTML" 
+              onclick="productModal.showModal()"
+            >
+              <span class="w-4 h-4 flex items-center justify-center">
+                {% include 'includes/svg/bd_taka_icon.html' %}
+              </span>
+            </a>
+          </div>
+          <div class="tooltip" data-tip="Delete Product">
+            <a 
+              class="btn btn-xs btn-error btn-outline hover:btn-error"
+              hx-get="{% url 'products:product_delete' product.id %}" 
+              hx-target="#productModalContent"
+              hx-swap="innerHTML" 
+              onclick="productModal.showModal()"
+            >
+              <span class="w-4 h-4 flex items-center justify-center">
+                {% include 'includes/svg/delete_icon.html' %}
+              </span>
+            </a>
+          </div>
+          {% endif %}
+        </div>
+      </td>
+    </tr>
+    {% empty %}
+    <tr>
+      <td colspan="11" class="text-center text-base-content/60 py-8">
+        <div class="flex flex-col items-center gap-2">
+          <div class="w-12 h-12 rounded-full bg-base-200 flex items-center justify-center">
+            <span class="text-base-content/40 text-xl">📦</span>
+          </div>
+          <span class="font-medium">No products found</span>
+          <span class="text-sm text-base-content/40">Start by adding your first product</span>
+        </div>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>

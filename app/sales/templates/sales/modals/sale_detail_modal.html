@@ -232,7 +232,8 @@
 
       {% if sale.status == 'completed' %}
       <a
-        href="{% url 'sales:sale_receipt' sale.id %}"
+        disabled
+        href="#"
         target="_blank"
         class="btn btn-accent flex-1 bg-purple-600 hover:bg-purple-700 border-purple-600 hover:border-purple-700 text-white">
         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">

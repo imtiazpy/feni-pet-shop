@@ -1,0 +1,138 @@
+<table class="table w-full text-sm">
+  <thead class="bg-base-200/50 border-b border-base-300">
+    <tr class="text-base-content/90">
+      <th class="font-semibold">#</th>
+      <th class="font-semibold">Product</th>
+      <th class="font-semibold">Batch Number</th>
+      <th class="font-semibold">Quantity</th>
+      <th class="font-semibold">Purchase Price</th>
+      <th class="font-semibold">Sale Price</th>
+      <th class="font-semibold">Location</th>
+      <th class="font-semibold">Supplier</th>
+      <th class="font-semibold">Expires</th>
+      <th class="font-semibold">Status</th>
+      <th class="font-semibold">Action</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for stock_item in stock_items %}
+    <tr
+      class="hover:bg-base-200 transition-colors duration-200 border-b border-base-300/50 {% cycle 'bg-base-100' 'bg-base-200/20' %}">
+      <td class="text-base-content/80">{{ forloop.counter }}</td>
+      <td>
+        <div class="flex items-center gap-2">
+          {% if stock_item.product.image %}
+          <div class="avatar">
+            <div class="w-8 h-8 rounded border border-base-300 overflow-hidden">
+              <img src="{{ stock_item.product.image.url }}" alt="Product" class="w-full h-full object-cover" />
+            </div>
+          </div>
+          {% endif %}
+          <span class="font-medium text-base-content">{{ stock_item.product.name }}</span>
+        </div>
+      </td>
+      <td class="text-base-content font-mono text-xs">{{ stock_item.batch_number }}</td>
+      <td>
+        <div class="flex items-center gap-1">
+          <span
+            class="font-semibold {% if stock_item.quantity <= 10 %}text-error{% elif stock_item.quantity <= 50 %}text-warning{% else %}text-success{% endif %}">
+            {{ stock_item.quantity }}
+          </span>
+          <span class="text-base-content/60 text-xs">units</span>
+        </div>
+      </td>
+      <td class="text-warning font-medium">৳ {{ stock_item.purchase_price|default:"—" }}</td>
+      <td class="text-success font-semibold">৳ {{ stock_item.sale_price }}</td>
+      <td>
+        {% if stock_item.stock_location %}
+        <span class="badge badge-outline badge-sm">{{ stock_item.stock_location.name }}</span>
+        {% else %}
+        <span class="text-base-content/60">—</span>
+        {% endif %}
+      </td>
+      <td class="text-base-content">{{ stock_item.supplier.name | default:"—" }}</td>
+      <td>
+        {% if stock_item.expiration_date %}
+        <span
+          class="font-mono text-xs {% if stock_item.expiration_date|date:'Y-m-d' < today|date:'Y-m-d' %}text-error{% elif stock_item.expiration_date|date:'Y-m-d' <= future_30_days|date:'Y-m-d' %}text-warning{% else %}text-base-content{% endif %}">
+          {{ stock_item.expiration_date|date:"Y-m-d" }}
+        </span>
+        {% else %}
+        <span class="text-base-content/60">—</span>
+        {% endif %}
+      </td>
+      <td>
+        {% comment %} TODO: we have to handle it efficiently {% endcomment %}
+        {% if stock_item.quantity == 0 %}
+        <span class="badge badge-error badge-sm">Out of Stock</span>
+        {% elif stock_item.quantity <= 10 %} <span class="badge badge-warning badge-sm">Low Stock</span>
+          {% elif stock_item.expiration_date and stock_item.expiration_date|date:'Y-m-d' < today|date:'Y-m-d' %} <span
+            class="badge badge-error badge-sm">Expired</span>
+            {% elif stock_item.expiration_date and stock_item.expiration_date|date:'Y-m-d' <=
+              future_30_days|date:'Y-m-d' %} <span class="badge badge-warning badge-sm">Expiring Soon</span>
+              {% else %}
+              <span class="badge badge-success badge-sm">In Stock</span>
+              {% endif %}
+      </td>
+      <td>
+        <div class="flex gap-1">
+          <div class="tooltip" data-tip="View Details">
+            <a class="btn btn-xs btn-info btn-outline hover:btn-info"
+              hx-get="{% url 'stock:stockitem_detail' stock_item.id %}" hx-target="#stockModalContent"
+              hx-swap="innerHTML" onclick="stockModal.showModal()">
+              <span class="w-4 h-4 flex items-center justify-center">
+                {% include 'includes/svg/circle_info_icon.html' %}
+              </span>
+            </a>
+          </div>
+          {% if request.user.role == 'admin' or request.user.role == 'inventory_manager' %}
+          <div class="tooltip" data-tip="Edit Stock">
+            <a class="btn btn-xs btn-warning btn-outline hover:btn-warning"
+              hx-get="{% url 'stock:stockitem_update' stock_item.id %}" hx-target="#stockModalContent"
+              hx-swap="innerHTML" onclick="stockModal.showModal()">
+              <span class="w-4 h-4 flex items-center justify-center">
+                {% include 'includes/svg/pen_icon.html' %}
+              </span>
+            </a>
+          </div>
+          <div class="tooltip" data-tip="Adjust Quantity">
+            <a class="btn btn-xs btn-accent btn-outline hover:btn-accent"
+              hx-get="{% url 'stock:stockitem_adjust' stock_item.id %}" hx-target="#stockModalContent"
+              hx-swap="innerHTML" onclick="stockModal.showModal()" disabled>
+              <span class="w-4 h-4 flex items-center justify-center">
+                {% include 'includes/svg/adjustments_icon.html' %}
+              </span>
+            </a>
+          </div>
+          <div class="tooltip" data-tip="Delete Stock">
+            <a class="btn btn-xs btn-error btn-outline hover:btn-error"
+              hx-get="{% url 'stock:stockitem_delete' stock_item.id %}" hx-target="#stockModalContent"
+              hx-swap="innerHTML" onclick="stockModal.showModal()">
+              <span class="w-4 h-4 flex items-center justify-center">
+                {% include 'includes/svg/delete_icon.html' %}
+              </span>
+            </a>
+          </div>
+          {% endif %}
+        </div>
+      </td>
+    </tr>
+    {% empty %}
+    <tr>
+      <td colspan="11" class="text-center text-base-content/60 py-8">
+        <div class="flex flex-col items-center gap-2">
+          <div class="w-12 h-12 rounded-full bg-base-200 flex items-center justify-center">
+            <span class="text-base-content/40 text-xl">📦</span>
+          </div>
+          <span class="font-medium">No stock items found</span>
+          {% if request.GET.product_id or request.GET.location_id %}
+          <span class="text-sm text-base-content/40">Try adjusting your filters</span>
+          {% else %}
+          <span class="text-sm text-base-content/40">Start by adding your first stock item</span>
+          {% endif %}
+        </div>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>

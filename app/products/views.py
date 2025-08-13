@@ -3,17 +3,40 @@ from django.views.generic import ListView, CreateView, DetailView, UpdateView, D
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
 from django.urls import reverse_lazy
-from django.db.models import Prefetch
+from django.db.models import Prefetch, Q
 
 from .models import Product, Category, Supplier
 from core.mixins import RoleRequiredMixin
+
+
+class ProductListPartialView(LoginRequiredMixin, ListView):
+    """For Search result"""
+    model = Product
+    template_name = 'products/partials/product_list_partial.html'
+    context_object_name = 'products'
+    paginate_by = 20
+
+    def get_queryset(self):
+        queryset = super().get_queryset().select_related('category')
+        search = self.request.GET.get('search')
+
+        if search:
+            queryset = queryset.filter(
+                Q(name__icontains=search) |
+                Q(barcode__icontains=search)
+            )
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
 
 
 class ProductListView(LoginRequiredMixin, ListView):
     model = Product
     template_name = 'products/product_list.html'
     context_object_name = 'products'
-    paginate_by = 10
+    paginate_by = 20
 
     def get_queryset(self):
         queryset = super().get_queryset().select_related('category')
@@ -118,6 +141,7 @@ class CategoryListView(LoginRequiredMixin, ListView):
     model = Category
     template_name = 'products/category_list.html'
     context_object_name = 'categories'
+    paginate_by = 20
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -203,11 +227,34 @@ class CategoryDeleteView(LoginRequiredMixin, RoleRequiredMixin, DeleteView):
         return super().form_invalid(form)
 
 
+
+class SupplierListPartialView(LoginRequiredMixin, ListView):
+    model = Supplier
+    template_name = 'products/partials/supplier_list_partial.html'
+    context_object_name = 'suppliers'
+    paginate_by = 20
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        search = self.request.GET.get('search')
+
+        if search:
+            queryset = queryset.filter(
+                Q(name__icontains=search) |
+                Q(email__icontains=search)
+            )
+        return queryset
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+
 class SupplierListView(LoginRequiredMixin, ListView):
     model = Supplier
     template_name = 'products/supplier_list.html'
     context_object_name = 'suppliers'
-    paginate_by = 10
+    paginate_by = 20
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
