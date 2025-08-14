@@ -61,7 +61,6 @@ class SaleCreateView(LoginRequiredMixin, RoleRequiredMixin, CreateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['products'] = Product.objects.all()
         context['stock_items'] = StockItem.objects.select_related('product').all()
         if self.request.headers.get('HX-Request'):
             context['template_to_extend'] = 'partials/base_empty.html'

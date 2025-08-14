@@ -10,6 +10,33 @@ from stock.models import StockItem, StockItemTracking, StockLocation
 from products.models import Product, Supplier
 
 
+
+class StockItemSearchView(LoginRequiredMixin, ListView):
+    """
+    view for search feature in manual sale create view
+    we will solve it efficiently later
+    TODO: Optimize it
+    """
+    model = StockItem
+    template_name = 'stock/partials/stockitem_sale_search.html'
+    context_object_name = 'stock_items'
+
+    def get_queryset(self):
+        queryset = super().get_queryset().select_related('product')
+        search = self.request.GET.get('search')
+
+        if search:
+            queryset = queryset.filter(
+                Q(product__name__icontains = search) |
+                Q(product__barcode__icontains = search) |
+                Q(batch_number__icontains = search)
+            )
+        else:
+            queryset = StockItem.objects.none()
+        return queryset
+
+
+
 class StockItemListPartialView(LoginRequiredMixin, ListView):
     """For search result"""
     model = StockItem

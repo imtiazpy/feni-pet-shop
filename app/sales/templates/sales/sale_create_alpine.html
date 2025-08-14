@@ -38,26 +38,15 @@
         </button>
       </div>
 
-      <div id="saleItemsContainer" class="space-y-4">
-        <!-- Empty state -->
-        <div x-show="selectedItems.length === 0" class="text-center py-8 text-base-content/60">
-          <div class="flex flex-col items-center gap-2">
-            <div class="w-12 h-12 rounded-full bg-base-200 flex items-center justify-center">
-              <span class="text-base-content/40 text-xl">🛒</span>
-            </div>
-            <span class="font-medium">No items added yet</span>
-            <span class="text-sm text-base-content/40">Click "Add Item" to start building the sale</span>
+      <!-- Empty state -->
+      <div x-show="selectedItems.length === 0" class="text-center py-8 text-base-content/60">
+        <div class="flex flex-col items-center gap-2">
+          <div class="w-12 h-12 rounded-full bg-base-200 flex items-center justify-center">
+            <span class="text-base-content/40 text-xl">🛒</span>
           </div>
+          <span class="font-medium">No items added yet</span>
+          <span class="text-sm text-base-content/40">Click "Add Item" to start building the sale</span>
         </div>
-
-        <!-- Hidden inputs for form submission -->
-        <template x-for="(item, index) in selectedItems" :key="item.stockId">
-          <div>
-            <input type="hidden" :name="'stock_item_' + index" :value="item.stockId">
-            <input type="hidden" :name="'quantity_' + index" x-model="item.quantity">
-            <input type="hidden" :name="'sale_price_' + index" :value="item.salePrice">
-          </div>
-        </template>
       </div>
 
       <!-- Items Summary Table -->
@@ -103,6 +92,15 @@
             </tbody>
           </table>
         </div>
+
+        <!-- Hidden inputs for form submission -->
+        <template x-for="(item, index) in selectedItems" :key="item.stockId">
+          <div>
+            <input type="hidden" :name="'stock_item_' + index" :value="item.stockId">
+            <input type="hidden" :name="'quantity_' + index" x-model="item.quantity">
+            <input type="hidden" :name="'sale_price_' + index" :value="item.salePrice">
+          </div>
+        </template>
       </div>
     </div>
 
@@ -209,44 +207,25 @@
             <label class="label">
               <span class="label-text font-medium">Search Product</span>
             </label>
-            <input type="text" x-model="searchTerm" placeholder="Search by product name or batch..." 
-                   class="input input-bordered bg-white dark:bg-gray-700">
+            <input 
+              type="text" 
+              name="search" 
+              placeholder="Type product name or batch number..." 
+              class="input input-bordered w-full bg-white dark:bg-gray-700"
+              autocomplete="off"
+              hx-get="{% url 'stock:stockitem_search' %}"
+              hx-trigger="keyup changed delay:500ms"
+              hx-target="#stock-items-container"
+              hx-include="[name='search']"
+            >
           </div>
 
-          <div class="overflow-x-auto max-h-96">
-            <table class="table w-full text-sm">
-              <thead>
-                <tr>
-                  <th>Product</th>
-                  <th>Batch</th>
-                  <th>Available Stock</th>
-                  <th>Sale Price</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                <template x-for="item in filteredStockItems" :key="item.id">
-                  <tr>
-                    <td>
-                      <div class="flex items-center gap-2">
-                        <img x-show="item.productImage" :src="item.productImage" alt="Product" class="w-8 h-8 rounded object-cover">
-                        <span class="font-medium" x-text="item.productName"></span>
-                      </div>
-                    </td>
-                    <td class="font-mono text-xs" x-text="item.batch || '—'"></td>
-                    <td>
-                      <span class="font-semibold" :class="item.available <= 10 ? 'text-warning' : 'text-success'" x-text="item.available"></span>
-                    </td>
-                    <td class="font-semibold text-info" x-text="'৳ ' + item.salePrice.toFixed(2)"></td>
-                    <td>
-                      <button type="button" @click="selectProduct(item)" class="btn btn-primary btn-xs">
-                        Select
-                      </button>
-                    </td>
-                  </tr>
-                </template>
-              </tbody>
-            </table>
+          <div id="stock-items-container" class="overflow-x-auto max-h-96">
+            <!-- HTMX will inject search results here -->
+            <div class="text-center py-8 text-gray-500">
+              <div class="text-4xl mb-2">🔍</div>
+              <p>Start typing to search for products...</p>
+            </div>
           </div>
         </div>
       </div>
@@ -260,27 +239,12 @@ function saleManager() {
   return {
     selectedItems: [],
     showModal: false,
-    searchTerm: '',
     discountAmount: 0,
     notes: '',
-    stockItems: [],
     
     init() {
-      // Initialize stock items from backend
-      this.stockItems = [
-        {% for stock_item in stock_items %}
-        {% if stock_item.quantity > 0 %}
-        {
-          id: {{ stock_item.id }},
-          productName: "{{ stock_item.product.name|escapejs }}",
-          productImage: "{% if stock_item.product.image %}{{ stock_item.product.image.url }}{% endif %}",
-          batch: "{{ stock_item.batch_number|default:'' }}",
-          available: {{ stock_item.quantity }},
-          salePrice: {{ stock_item.sale_price }}
-        },
-        {% endif %}
-        {% endfor %}
-      ];
+      // Expose selectProduct to global scope for HTMX callbacks
+      window.selectProduct = this.selectProduct.bind(this);
     },
 
     get subtotal() {
@@ -291,24 +255,22 @@ function saleManager() {
       return Math.max(0, this.subtotal - this.discountAmount);
     },
 
-    get filteredStockItems() {
-      if (!this.searchTerm) return this.stockItems;
-      
-      const term = this.searchTerm.toLowerCase();
-      return this.stockItems.filter(item => 
-        item.productName.toLowerCase().includes(term) || 
-        item.batch.toLowerCase().includes(term)
-      );
-    },
-
     openItemModal() {
       this.showModal = true;
-      this.searchTerm = '';
     },
 
     closeItemModal() {
       this.showModal = false;
-      this.searchTerm = '';
+      // Clear search input and results when closing
+      const searchInput = document.querySelector('input[name="search"]');
+      if (searchInput) searchInput.value = '';
+      
+      document.getElementById('stock-items-container').innerHTML = `
+        <div class="text-center py-8 text-gray-500">
+          <div class="text-4xl mb-2">🔍</div>
+          <p>Start typing to search for products...</p>
+        </div>
+      `;
     },
 
     selectProduct(stockItem) {
@@ -323,8 +285,8 @@ function saleManager() {
       this.selectedItems.push({
         stockId: stockItem.id,
         productName: stockItem.productName,
-        productImage: stockItem.productImage,
-        batch: stockItem.batch,
+        productImage: stockItem.productImage || '',
+        batch: stockItem.batch || '',
         available: stockItem.available,
         salePrice: stockItem.salePrice,
         quantity: 1
@@ -340,10 +302,7 @@ function saleManager() {
     },
 
     updatePaymentSummary() {
-      // Force reactivity update
-      this.$nextTick(() => {
-        // Payment summary is automatically updated by computed properties
-      });
+      // Payment summary is automatically updated by computed properties
     },
 
     validateAndSubmit(event) {

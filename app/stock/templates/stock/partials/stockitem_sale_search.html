@@ -1,0 +1,62 @@
+{% if stock_items %}
+<table class="table w-full text-sm">
+  <thead>
+    <tr>
+      <th>Product</th>
+      <th>Batch</th>
+      <th>Available Stock</th>
+      <th>Sale Price</th>
+      <th>Action</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for item in stock_items %}
+      <tr>
+        <td>
+          <div class="flex items-center gap-2">
+            {% if item.product.image %}
+              <img src="{{ item.product.image.url }}" alt="Product" class="w-8 h-8 rounded object-cover">
+            {% else %}
+              <div class="w-8 h-8 bg-gray-200 dark:bg-gray-600 rounded flex items-center justify-center">
+                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                </svg>
+              </div>
+            {% endif %}
+            <span class="font-medium">{{ item.product.name }}</span>
+          </div>
+        </td>
+        <td class="font-mono text-xs">{{ item.batch_number|default:"—" }}</td>
+        <td>
+          <span class="font-semibold {% if item.quantity <= 10 %}text-warning{% else %}text-success{% endif %}">
+            {{ item.quantity }} units
+          </span>
+        </td>
+        <td class="font-semibold text-info">৳{{ item.sale_price|floatformat:2 }}</td>
+        <td>
+          <button 
+            type="button" 
+            onclick="window.selectProduct({
+              id: {{ item.id }},
+              productName: '{{ item.product.name|escapejs }}',
+              productImage: '{% if item.product.image %}{{ item.product.image.url }}{% endif %}',
+              batch: '{{ item.batch_number|default:""|escapejs }}',
+              available: {{ item.quantity }},
+              salePrice: {{ item.sale_price }}
+            })" 
+            class="btn btn-primary btn-xs"
+          >
+            Select
+          </button>
+        </td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<div class="text-center py-8 text-gray-500">
+  <div class="text-4xl mb-2">📦</div>
+  <p class="font-medium">No products found</p>
+  <p class="text-sm">Try adjusting your search terms</p>
+</div>
+{% endif %}
