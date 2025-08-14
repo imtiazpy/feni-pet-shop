@@ -149,6 +149,8 @@ class SalePoSCreateView(LoginRequiredMixin, RoleRequiredMixin, View):
             return self.update_quantity(request)
         elif action == 'remove_item':
             return self.remove_item(request)
+        elif action == 'clear_cart':
+            return self.clear_cart(request)
         elif action == 'finalize_sale':
             return self.finalize_sale(request)
         return JsonResponse({'status': 'error', 'message': 'Invalid action'}, status=400)
@@ -251,6 +253,21 @@ class SalePoSCreateView(LoginRequiredMixin, RoleRequiredMixin, View):
             })
         
         except ValidationError as e:
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+        
+    def clear_cart(self, request):
+        try:
+            # Clear the cart from session
+            request.session['pos_cart'] = []
+            request.session.modified = True
+            
+            return JsonResponse({
+                'status': 'success',
+                'cart': [],
+                'message': "Cart cleared successfully."
+            })
+        
+        except Exception as e:
             return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
 
     def finalize_sale(self, request):

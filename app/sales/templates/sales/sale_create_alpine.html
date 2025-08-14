@@ -123,6 +123,21 @@
                    class="input input-bordered bg-white dark:bg-gray-700" placeholder="0.00" @input="updatePaymentSummary()">
           </div>
 
+          <!-- Amount Received Field -->
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text font-medium">Amount Received (৳)</span>
+              <span class="label-text-alt text-red-500">*</span>
+            </label>
+            <input type="number" name="amount_received" x-model.number="amountReceived" step="0.01" min="0"
+                   class="input input-bordered bg-white dark:bg-gray-700" 
+                   :class="{'input-error border-red-500': amountReceived > 0 && amountReceived < finalTotal}"
+                   placeholder="0.00" @input="updatePaymentSummary()" required>
+            <label class="label" x-show="amountReceived > 0 && amountReceived < finalTotal">
+              <span class="label-text-alt text-red-500">⚠️ Insufficient amount received</span>
+            </label>
+          </div>
+
           <div class="form-control">
             <label class="label">
               <span class="label-text font-medium">Notes (Optional)</span>
@@ -146,9 +161,38 @@
               </div>
               <hr class="border-gray-300 dark:border-gray-600">
               <div class="flex justify-between text-lg">
-                <span class="font-bold text-gray-900 dark:text-gray-100">Final Total:</span>
+                <span class="font-bold text-gray-900 dark:text-gray-100">Total Amount:</span>
                 <span class="font-bold text-green-600 dark:text-green-400" x-text="'৳ ' + finalTotal.toFixed(2)"></span>
               </div>
+              
+              <!-- Amount Received Display -->
+              <div x-show="amountReceived > 0" class="pt-2 border-t border-gray-300 dark:border-gray-600">
+                <div class="flex justify-between">
+                  <span class="text-gray-700 dark:text-gray-300">Amount Received:</span>
+                  <span class="font-semibold text-blue-600 dark:text-blue-400" x-text="'৳ ' + amountReceived.toFixed(2)"></span>
+                </div>
+                
+                <!-- Change Amount -->
+                <div x-show="changeAmount !== 0" class="flex justify-between text-lg font-bold mt-2 p-2 rounded"
+                     :class="changeAmount >= 0 ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'">
+                  <span x-text="changeAmount >= 0 ? 'Change Due:' : 'Amount Due:'"></span>
+                  <span x-text="'৳ ' + Math.abs(changeAmount).toFixed(2)"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Amount Buttons -->
+          <div class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
+            <h4 class="font-semibold text-blue-900 dark:text-blue-100 mb-3 text-sm">Quick Amount Entry</h4>
+            <div class="grid grid-cols-3 gap-2">
+              <template x-for="amount in quickAmounts" :key="amount">
+                <button type="button" @click="setQuickAmount(amount)" 
+                        class="btn btn-sm btn-outline btn-primary text-xs"
+                        x-text="'৳ ' + amount"></button>
+              </template>
+              <button type="button" @click="setExactAmount()" 
+                      class="btn btn-sm btn-outline btn-secondary text-xs col-span-3">Exact Amount</button>
             </div>
           </div>
 
@@ -164,11 +208,13 @@
 
     <!-- Action Buttons -->
     <div class="flex gap-3 pt-4">
-      <button type="submit" :disabled="selectedItems.length === 0" class="btn btn-success flex-1">
+      <button type="submit" :disabled="!canCompleteSale" 
+              class="btn flex-1"
+              :class="canCompleteSale ? 'btn-success' : 'btn-disabled'">
         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
         </svg>
-        Complete Sale
+        <span x-text="getCompleteButtonText()"></span>
       </button>
       <a href="{% url 'sales:sale_list' %}" class="btn btn-ghost flex-1">
         Cancel
@@ -240,6 +286,7 @@ function saleManager() {
     selectedItems: [],
     showModal: false,
     discountAmount: 0,
+    amountReceived: 0,
     notes: '',
     
     init() {
@@ -253,6 +300,44 @@ function saleManager() {
 
     get finalTotal() {
       return Math.max(0, this.subtotal - this.discountAmount);
+    },
+
+    get changeAmount() {
+      return this.amountReceived - this.finalTotal;
+    },
+
+    get canCompleteSale() {
+      return this.selectedItems.length > 0 && 
+             this.amountReceived > 0 && 
+             this.amountReceived >= this.finalTotal;
+    },
+
+    get quickAmounts() {
+      const total = this.finalTotal;
+      if (total <= 0) return [100, 500, 1000];
+      
+      // Generate smart quick amounts based on total
+      const amounts = [];
+      const roundedTotal = Math.ceil(total);
+      
+      // Add exact amount
+      amounts.push(roundedTotal);
+      
+      // Add common denominations above total
+      const denominations = [10, 20, 50, 100, 200, 500, 1000, 2000, 5000];
+      
+      denominations.forEach(denom => {
+        if (denom > total && amounts.length < 6) {
+          amounts.push(denom);
+        }
+      });
+      
+      // Ensure we have at least a few options
+      if (amounts.length < 3) {
+        amounts.push(roundedTotal + 50, roundedTotal + 100, roundedTotal + 500);
+      }
+      
+      return [...new Set(amounts)].sort((a, b) => a - b).slice(0, 6);
     },
 
     openItemModal() {
@@ -301,6 +386,32 @@ function saleManager() {
       this.updatePaymentSummary();
     },
 
+    setQuickAmount(amount) {
+      this.amountReceived = amount;
+      this.updatePaymentSummary();
+    },
+
+    setExactAmount() {
+      this.amountReceived = this.finalTotal;
+      this.updatePaymentSummary();
+    },
+
+    getCompleteButtonText() {
+      if (this.selectedItems.length === 0) {
+        return 'Add Items to Continue';
+      }
+      if (this.amountReceived === 0) {
+        return 'Enter Amount Received';
+      }
+      if (this.amountReceived < this.finalTotal) {
+        return `Need ৳${(this.finalTotal - this.amountReceived).toFixed(2)} More`;
+      }
+      if (this.changeAmount > 0) {
+        return `Complete Sale (Change: ৳${this.changeAmount.toFixed(2)})`;
+      }
+      return 'Complete Sale';
+    },
+
     updatePaymentSummary() {
       // Payment summary is automatically updated by computed properties
     },
@@ -308,6 +419,18 @@ function saleManager() {
     validateAndSubmit(event) {
       if (this.selectedItems.length === 0) {
         alert('Please add at least one item to the sale.');
+        return;
+      }
+
+      if (this.amountReceived === 0) {
+        alert('Please enter the amount received from customer.');
+        document.querySelector('input[name="amount_received"]').focus();
+        return;
+      }
+
+      if (this.amountReceived < this.finalTotal) {
+        alert(`Insufficient amount received. Need ৳${(this.finalTotal - this.amountReceived).toFixed(2)} more.`);
+        document.querySelector('input[name="amount_received"]').focus();
         return;
       }
 
@@ -322,6 +445,12 @@ function saleManager() {
           alert(`Quantity for ${item.productName} exceeds available stock.`);
           return;
         }
+      }
+
+      // Show change confirmation if there's change due
+      if (this.changeAmount > 0) {
+        const confirmed = confirm(`Change due: ৳${this.changeAmount.toFixed(2)}\n\nDo you want to complete this sale?`);
+        if (!confirmed) return;
       }
 
       // Submit the form

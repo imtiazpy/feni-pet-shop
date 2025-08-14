@@ -2,6 +2,73 @@
 {% load static %}
 {% block title %}PoS Sale | Pet IMS{% endblock %}
 
+
+{% block extra_css %}
+<style>
+[x-cloak] { 
+  display: none !important; 
+}
+
+/* Focus styles for barcode input */
+.focus\:ring-4:focus {
+  ring-width: 4px;
+}
+
+/* Scanner ready pulse animation */
+.scanner-ready {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+/* Smooth transitions for alerts */
+[x-transition] {
+  transition: all 0.3s ease-in-out;
+}
+
+/* Keyboard shortcut styling */
+kbd {
+  @apply bg-gray-200 dark:bg-gray-700 px-1 py-0.5 rounded text-xs font-mono;
+}
+
+/* Enhanced button states */
+.btn:disabled {
+  @apply opacity-50 cursor-not-allowed;
+}
+
+/* Cart item hover effects */
+.hover\:bg-base-200\/30:hover {
+  background-color: rgba(var(--b2), 0.3);
+}
+
+/* Quick amount button grid responsive */
+@media (max-width: 640px) {
+  .grid-cols-3 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Custom input validation states */
+.input-error {
+  @apply border-red-500 focus:border-red-500 focus:ring-red-200;
+}
+
+/* Payment summary enhancements */
+.alert-info {
+  @apply bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800 text-blue-800 dark:text-blue-200;
+}
+</style>
+
+{% endblock %}
+
+
 {% block content %}
 <div class="mb-6 flex justify-between items-center">
   <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Point of Sale</h1>
@@ -28,7 +95,7 @@
         Barcode Scanner
       </h2>
       <div class="flex items-center gap-2">
-        <div class="badge badge-success badge-sm" x-show="scannerReady">Ready</div>
+        <div class="badge badge-success badge-sm scanner-ready" x-show="scannerReady">Ready</div>
         <div class="badge badge-warning badge-sm" x-show="!scannerReady">Initializing...</div>
       </div>
     </div>
@@ -38,7 +105,7 @@
         <input type="text" x-model="barcodeInput" x-ref="barcodeField" 
                @keydown.enter="processBarcode()"
                @input="clearMessage()"
-               class="input input-lg input-bordered w-full text-center font-mono text-xl bg-white dark:bg-gray-700" 
+               class="input input-lg input-bordered w-full text-center font-mono text-xl bg-white dark:bg-gray-700 focus:ring-4 focus:ring-blue-200 dark:focus:ring-blue-800" 
                placeholder="Scan barcode or type manually..." 
                autocomplete="off">
       </div>
@@ -56,7 +123,7 @@
     </div>
 
     <!-- Status Messages -->
-    <div x-show="message" class="mt-4">
+    <div x-show="message" class="mt-4" x-transition>
       <div class="alert" :class="messageType === 'success' ? 'alert-success' : 'alert-error'">
         <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -79,13 +146,21 @@
             Cart Items
             <span class="ml-2 badge badge-primary" x-text="cart.length" x-show="cart.length > 0"></span>
           </h2>
-          <button type="button" @click="clearCart()" :disabled="cart.length === 0"
-                  class="btn btn-error btn-sm">
-            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-            </svg>
-            Clear All
-          </button>
+          <div class="flex gap-2">
+            <button type="button" @click="openManualAdd()" class="btn btn-outline btn-sm">
+              <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+              </svg>
+              Manual Add
+            </button>
+            <button type="button" @click="clearCart()" :disabled="cart.length === 0"
+                    class="btn btn-error btn-sm">
+              <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+              </svg>
+              Clear All
+            </button>
+          </div>
         </div>
 
         <!-- Empty Cart State -->
@@ -167,24 +242,39 @@
         </h2>
 
         <!-- Payment Summary -->
-        <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 mb-6">
-          <div class="space-y-3">
-            <div class="flex justify-between text-sm">
+        <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 mb-4 border border-gray-200 dark:border-gray-600">
+          <div class="space-y-2 text-sm">
+            <div class="flex justify-between">
               <span class="text-gray-600 dark:text-gray-400">Items:</span>
               <span class="font-medium" x-text="cart.length"></span>
             </div>
-            <div class="flex justify-between text-sm">
+            <div class="flex justify-between">
               <span class="text-gray-600 dark:text-gray-400">Subtotal:</span>
               <span class="font-semibold text-blue-600 dark:text-blue-400" x-text="'৳ ' + subtotal.toFixed(2)"></span>
             </div>
-            <div class="flex justify-between text-sm">
+            <div class="flex justify-between">
               <span class="text-gray-600 dark:text-gray-400">Discount:</span>
               <span class="font-semibold text-orange-600 dark:text-orange-400" x-text="'৳ ' + discountAmount.toFixed(2)"></span>
             </div>
             <hr class="border-gray-300 dark:border-gray-600">
-            <div class="flex justify-between text-xl font-bold">
+            <div class="flex justify-between text-lg font-bold">
               <span class="text-gray-900 dark:text-gray-100">Total:</span>
               <span class="text-green-600 dark:text-green-400" x-text="'৳ ' + finalTotal.toFixed(2)"></span>
+            </div>
+            
+            <!-- Payment Status Display -->
+            <div x-show="amountReceived > 0" class="pt-2 border-t border-gray-300 dark:border-gray-600">
+              <div class="flex justify-between">
+                <span class="text-gray-700 dark:text-gray-300">Amount Received:</span>
+                <span class="font-semibold text-blue-600 dark:text-blue-400" x-text="'৳ ' + amountReceived.toFixed(2)"></span>
+              </div>
+              
+              <!-- Change/Due Amount -->
+              <div x-show="changeAmount !== 0" class="flex justify-between text-base font-bold mt-2 p-2 rounded"
+                   :class="changeAmount >= 0 ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'">
+                <span x-text="changeAmount >= 0 ? 'Change Due:' : 'Amount Due:'"></span>
+                <span x-text="'৳ ' + Math.abs(changeAmount).toFixed(2)"></span>
+              </div>
             </div>
           </div>
         </div>
@@ -195,11 +285,42 @@
             <span class="label-text font-medium">Discount (৳)</span>
           </label>
           <input type="number" x-model.number="discountAmount" step="0.01" min="0" :max="subtotal"
+                 @input="updatePaymentSummary()"
                  class="input input-bordered bg-white dark:bg-gray-700" placeholder="0.00">
         </div>
 
+        <!-- Amount Received Input -->
+        <div class="form-control mb-4">
+          <label class="label">
+            <span class="label-text font-medium">Amount Received (৳)</span>
+            <span class="label-text-alt text-red-500" x-show="cart.length > 0">*</span>
+          </label>
+          <input type="number" x-model.number="amountReceived" step="0.01" min="0"
+                 @input="updatePaymentSummary()"
+                 :class="{'input-error border-red-500': amountReceived > 0 && amountReceived < finalTotal}"
+                 class="input input-bordered bg-white dark:bg-gray-700" 
+                 placeholder="0.00">
+          <label class="label" x-show="amountReceived > 0 && amountReceived < finalTotal">
+            <span class="label-text-alt text-red-500">⚠️ Insufficient amount received</span>
+          </label>
+        </div>
+
+        <!-- Quick Amount Buttons -->
+        <div x-show="finalTotal > 0" class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 mb-4 border border-blue-200 dark:border-blue-800">
+          <h4 class="font-semibold text-blue-900 dark:text-blue-100 mb-2 text-sm">Quick Amount Entry</h4>
+          <div class="grid grid-cols-3 gap-1 mb-2">
+            <template x-for="amount in quickAmounts" :key="amount">
+              <button type="button" @click="setQuickAmount(amount)" 
+                      class="btn btn-xs btn-outline btn-primary text-xs"
+                      x-text="'৳ ' + amount"></button>
+            </template>
+          </div>
+          <button type="button" @click="setExactAmount()" 
+                  class="btn btn-xs btn-outline btn-secondary w-full text-xs">Exact Amount</button>
+        </div>
+
         <!-- Notes -->
-        <div class="form-control mb-6">
+        <div class="form-control mb-4">
           <label class="label">
             <span class="label-text font-medium">Notes (Optional)</span>
           </label>
@@ -208,17 +329,18 @@
         </div>
 
         <!-- Checkout Button -->
-        <button type="button" @click="finalizeSale()" :disabled="cart.length === 0 || processing"
-                class="btn btn-success btn-lg w-full">
+        <button type="button" @click="finalizeSale()" :disabled="!canCompleteSale || processing"
+                class="btn btn-lg w-full mb-3"
+                :class="canCompleteSale ? 'btn-success' : 'btn-disabled'">
           <svg x-show="!processing" class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
           </svg>
           <span x-show="processing" class="loading loading-spinner loading-sm mr-2"></span>
-          <span x-text="processing ? 'Processing...' : 'Complete Sale'"></span>
+          <span x-text="getCompleteButtonText()"></span>
         </button>
 
         <!-- Quick Actions -->
-        <div class="grid grid-cols-2 gap-2 mt-3">
+        <div class="grid grid-cols-2 gap-2 mb-3">
           <button type="button" @click="focusBarcode()" class="btn btn-outline btn-sm">
             <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M12 12h-.01m9.01 0a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -231,6 +353,34 @@
             </svg>
             Clear Cart
           </button>
+        </div>
+
+        <!-- Hold/Resume Sale -->
+        <div class="grid grid-cols-2 gap-2">
+          <button type="button" @click="holdSale()" :disabled="cart.length === 0" class="btn btn-warning btn-sm">
+            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            Hold Sale
+          </button>
+          <button type="button" @click="showHeldSales()" class="btn btn-info btn-sm">
+            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
+            </svg>
+            Held Sales
+          </button>
+        </div>
+
+        <!-- Keyboard Shortcuts Help -->
+        <div class="alert alert-info text-xs mt-4">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-4 h-4">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+          <div>
+            <div><kbd>F1</kbd> Focus Scanner</div>
+            <div><kbd>F2</kbd> Clear Cart</div>
+            <div><kbd>F12</kbd> Complete Sale</div>
+          </div>
         </div>
       </div>
     </div>
@@ -247,6 +397,7 @@ function posManager() {
     barcodeInput: '',
     quickQuantity: 1,
     discountAmount: 0,
+    amountReceived: 0,
     notes: '',
     message: '',
     messageType: 'success',
@@ -278,9 +429,13 @@ function posManager() {
         // F12 - Complete sale
         if (e.key === 'F12') {
           e.preventDefault();
-          if (this.cart.length > 0) {
+          if (this.canCompleteSale) {
             this.finalizeSale();
           }
+        }
+        // ESC - Clear messages
+        if (e.key === 'Escape') {
+          this.clearMessage();
         }
       });
     },
@@ -291,6 +446,60 @@ function posManager() {
 
     get finalTotal() {
       return Math.max(0, this.subtotal - this.discountAmount);
+    },
+
+    get changeAmount() {
+      return this.amountReceived - this.finalTotal;
+    },
+
+    get canCompleteSale() {
+      return this.cart.length > 0 && 
+             this.amountReceived > 0 && 
+             this.amountReceived >= this.finalTotal;
+    },
+
+    get quickAmounts() {
+      const total = this.finalTotal;
+      if (total <= 0) return [100, 500, 1000];
+      
+      // Generate smart quick amounts based on total
+      const amounts = [];
+      const roundedTotal = Math.ceil(total);
+      
+      // Add exact amount
+      amounts.push(roundedTotal);
+      
+      // Add common denominations above total
+      const denominations = [10, 20, 50, 100, 200, 500, 1000, 2000, 5000];
+      
+      denominations.forEach(denom => {
+        if (denom > total && amounts.length < 6) {
+          amounts.push(denom);
+        }
+      });
+      
+      // Ensure we have at least a few options
+      if (amounts.length < 3) {
+        amounts.push(roundedTotal + 50, roundedTotal + 100, roundedTotal + 500);
+      }
+      
+      return [...new Set(amounts)].sort((a, b) => a - b).slice(0, 6);
+    },
+
+    getCompleteButtonText() {
+      if (this.cart.length === 0) {
+        return 'Add Items to Continue';
+      }
+      if (this.amountReceived === 0) {
+        return 'Enter Amount Received';
+      }
+      if (this.amountReceived < this.finalTotal) {
+        return `Need ৳${(this.finalTotal - this.amountReceived).toFixed(2)} More`;
+      }
+      if (this.changeAmount > 0) {
+        return `Complete Sale (Change: ৳${this.changeAmount.toFixed(2)})`;
+      }
+      return 'Complete Sale';
     },
 
     async loadCart() {
@@ -315,6 +524,20 @@ function posManager() {
       setTimeout(() => {
         this.message = '';
       }, 3000);
+    },
+
+    setQuickAmount(amount) {
+      this.amountReceived = amount;
+      this.updatePaymentSummary();
+    },
+
+    setExactAmount() {
+      this.amountReceived = this.finalTotal;
+      this.updatePaymentSummary();
+    },
+
+    updatePaymentSummary() {
+      // Payment summary is automatically updated by computed properties
     },
 
     async processBarcode() {
@@ -343,46 +566,20 @@ function posManager() {
         if (data.status === 'success') {
           this.cart = data.cart;
           this.showMessage(data.message, 'success');
+          
+          // Clear input fields after successful addition
           this.barcodeInput = '';
           this.quickQuantity = 1;
-          this.focusBarcode();
+          
+          // Refocus barcode input
+          this.$nextTick(() => {
+            this.focusBarcode();
+          });
         } else {
           this.showMessage(data.message, 'error');
         }
       } catch (error) {
-        this.showMessage('Error processing barcode', 'error');
-        console.error('Error:', error);
-      }
-    },
-
-    async updateQuantity(stockItemId, newQuantity) {
-      if (newQuantity < 1) return;
-
-      try {
-        const formData = new FormData();
-        formData.append('action', 'update_quantity');
-        formData.append('stock_item_id', stockItemId);
-        formData.append('quantity', newQuantity);
-        formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
-
-        const response = await fetch('', {
-          method: 'POST',
-          body: formData,
-          headers: {
-            'X-Requested-With': 'XMLHttpRequest'
-          }
-        });
-
-        const data = await response.json();
-        
-        if (data.status === 'success') {
-          this.cart = data.cart;
-          this.showMessage(data.message, 'success');
-        } else {
-          this.showMessage(data.message, 'error');
-        }
-      } catch (error) {
-        this.showMessage('Error updating quantity', 'error');
+        this.showMessage('Error adding item', 'error');
         console.error('Error:', error);
       }
     },
@@ -416,17 +613,91 @@ function posManager() {
       }
     },
 
+    async updateQuantity(stockItemId, newQuantity) {
+      if (newQuantity < 1) return;
+      
+      try {
+        const formData = new FormData();
+        formData.append('action', 'update_quantity');
+        formData.append('stock_item_id', stockItemId);
+        formData.append('quantity', newQuantity);
+        formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+
+        const response = await fetch('', {
+          method: 'POST',
+          body: formData,
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+          }
+        });
+
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+          this.cart = data.cart;
+          this.showMessage(data.message, 'success');
+        } else {
+          this.showMessage(data.message, 'error');
+        }
+      } catch (error) {
+        this.showMessage('Error updating quantity', 'error');
+        console.error('Error:', error);
+      }
+    },
+
     async clearCart() {
       if (this.cart.length === 0) return;
       
       if (!confirm('Are you sure you want to clear the entire cart?')) return;
 
-      // Remove all items one by one
-      for (const item of [...this.cart]) {
-        await this.removeItem(item.stock_item_id);
+      try {
+        const formData = new FormData();
+        formData.append('action', 'clear_cart');
+        formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+
+        const response = await fetch('', {
+          method: 'POST',
+          body: formData,
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+          }
+        });
+
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+          this.cart = [];
+          this.discountAmount = 0;
+          this.amountReceived = 0;
+          this.notes = '';
+          this.barcodeInput = '';
+          this.quickQuantity = 1;
+          this.showMessage('Cart cleared successfully', 'success');
+          
+          // Refocus barcode input
+          this.$nextTick(() => {
+            this.focusBarcode();
+          });
+        } else {
+          this.showMessage(data.message, 'error');
+        }
+      } catch (error) {
+        // Fallback: clear cart locally if server request fails
+        this.cart = [];
+        this.discountAmount = 0;
+        this.amountReceived = 0;
+        this.notes = '';
+        this.barcodeInput = '';
+        this.quickQuantity = 1;
+        this.showMessage('Cart cleared locally', 'success');
+        
+        // Refocus barcode input
+        this.$nextTick(() => {
+          this.focusBarcode();
+        });
+        
+        console.error('Error clearing cart:', error);
       }
-      
-      this.focusBarcode();
     },
 
     async finalizeSale() {
@@ -435,9 +706,25 @@ function posManager() {
         return;
       }
 
+      if (this.amountReceived === 0) {
+        this.showMessage('Please enter the amount received from customer', 'error');
+        return;
+      }
+
+      if (this.amountReceived < this.finalTotal) {
+        this.showMessage(`Insufficient amount received. Need ৳${(this.finalTotal - this.amountReceived).toFixed(2)} more`, 'error');
+        return;
+      }
+
       if (this.discountAmount > this.subtotal) {
         this.showMessage('Discount cannot exceed subtotal', 'error');
         return;
+      }
+
+      // Show change confirmation if there's change due
+      if (this.changeAmount > 0) {
+        const confirmed = confirm(`Change due: ৳${this.changeAmount.toFixed(2)}\n\nDo you want to complete this sale?`);
+        if (!confirmed) return;
       }
 
       this.processing = true;
@@ -446,6 +733,7 @@ function posManager() {
         const formData = new FormData();
         formData.append('action', 'finalize_sale');
         formData.append('discount_amount', this.discountAmount);
+        formData.append('amount_received', this.amountReceived);
         formData.append('notes', this.notes);
         formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
 
@@ -465,6 +753,7 @@ function posManager() {
           // Reset form
           this.cart = [];
           this.discountAmount = 0;
+          this.amountReceived = 0;
           this.notes = '';
           
           // Redirect after short delay
@@ -482,6 +771,62 @@ function posManager() {
       } finally {
         this.processing = false;
       }
+    },
+
+    openManualAdd() {
+      // This would open a modal for manual product search/add
+      // Similar to the first page's functionality
+      alert('Manual add feature - integrate with product search modal');
+    },
+
+    async holdSale() {
+      if (this.cart.length === 0) {
+        this.showMessage('No items in cart to hold', 'error');
+        return;
+      }
+
+      const saleId = prompt('Enter sale ID for holding (optional):') || `HOLD_${Date.now()}`;
+      
+      try {
+        const formData = new FormData();
+        formData.append('action', 'hold_sale');
+        formData.append('sale_id', saleId);
+        formData.append('discount_amount', this.discountAmount);
+        formData.append('amount_received', this.amountReceived);
+        formData.append('notes', this.notes);
+        formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+
+        const response = await fetch('', {
+          method: 'POST',
+          body: formData,
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+          }
+        });
+
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+          this.showMessage(`Sale held as: ${saleId}`, 'success');
+          
+          // Clear current cart
+          this.cart = [];
+          this.discountAmount = 0;
+          this.amountReceived = 0;
+          this.notes = '';
+          this.focusBarcode();
+        } else {
+          this.showMessage(data.message, 'error');
+        }
+      } catch (error) {
+        this.showMessage('Error holding sale', 'error');
+        console.error('Error:', error);
+      }
+    },
+
+    showHeldSales() {
+      // This would show a modal with held sales list
+      alert('Held sales feature - show list of held sales for resumption');
     }
   }
 }
@@ -490,28 +835,5 @@ function posManager() {
 <!-- Add CSRF token -->
 {% csrf_token %}
 
-<style>
-[x-cloak] { 
-  display: none !important; 
-}
-
-/* Focus styles for barcode input */
-input[x-ref="barcodeField"]:focus {
-  @apply ring-4 ring-blue-200 dark:ring-blue-800;
-}
-
-/* Scanner ready pulse animation */
-.badge-success {
-  animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.7;
-  }
-}
-</style>
 {% endblock %}
+

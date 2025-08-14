@@ -30,6 +30,8 @@ class StockItemSearchView(LoginRequiredMixin, ListView):
                 Q(product__name__icontains = search) |
                 Q(product__barcode__icontains = search) |
                 Q(batch_number__icontains = search)
+            ).filter(
+                quantity__gt=0
             )
         else:
             queryset = StockItem.objects.none()
