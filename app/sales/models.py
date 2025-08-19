@@ -89,7 +89,7 @@ class SaleManager(models.Manager):
             StockItemTracking.objects.create(
                 stock_item=stock_item,
                 quantity=quantity,
-                movement_type=StockItemTracking.MOVEMENT_TYPES.REMOVE,
+                movement_type=StockItemTracking.MOVEMENT_TYPES.SALE,
                 notes=notes or f"Sold {quantity} of {stock_item.product.name} in Sale #{sale.id}",
                 created_by=created_by,
                 created_at=timezone.now()

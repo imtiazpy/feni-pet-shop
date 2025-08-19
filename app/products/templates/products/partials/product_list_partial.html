@@ -1,3 +1,5 @@
+{% load product_tags %}
+
 <table class="table w-full text-sm">
   <thead class="bg-base-200/50 border-b border-base-300">
     <tr class="text-base-content/90">
@@ -23,12 +25,9 @@
       <td class="text-success font-semibold">{{ product.sale_price }}</td>
       <td class="text-warning font-medium">{{ product.cost_price }}</td>
       <td class="text-base-content">
-        {% comment %} TODO: we have to handle it efficiently {% endcomment %}
-        {% if product.is_in_stock %}
-        <span class="badge badge-success badge-sm">In Stock</span>
-        {% else %}
-        <span class="badge badge-error badge-sm">Out of Stock</span>
-        {% endif %}
+        <span class="badge badge-sm {{ product|product_status_class }} text-xs sm:text-sm px-2 sm:px-3 py-1 whitespace-nowrap">
+          {{ product|product_status_label }}
+        </span>
       </td>
       <td class="text-success font-semibold">{{ product.get_total_stock }}</td>
       <td class="text-base-content">{{ product.category.name | default:"—" }}</td>

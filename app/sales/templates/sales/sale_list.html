@@ -1,5 +1,5 @@
 {% extends template_to_extend %} 
-{% load static %} 
+{% load static sale_tags %} 
 {% block title %}Sale List | Pet IMS{% endblock %}
 
 {% block content %}
@@ -105,17 +105,9 @@
           ৳ {{ sale.total_amount|floatformat:2 }}
         </td>
         <td class="text-base-content">
-          {% if sale.status == 'completed' %}
-            <span class="badge badge-success badge-sm">Completed</span>
-          {% elif sale.status == 'pending' %}
-            <span class="badge badge-warning badge-sm">Pending</span>
-          {% elif sale.status == 'cancelled' %}
-            <span class="badge badge-error badge-sm">Cancelled</span>
-          {% elif sale.status == 'refunded' %}
-            <span class="badge badge-info badge-sm">Refunded</span>
-          {% else %}
-            <span class="badge badge-ghost badge-sm">{{ sale.status|title }}</span>
-          {% endif %}
+          <span class="badge badge-sm {{ sale|sale_status_class }} text-xs sm:text-sm px-2 sm:px-3 py-1 whitespace-nowrap">
+            {{ sale|sale_status_label }}
+          </span>
         </td>
         <td class="text-base-content">
           {% if sale.created_by %}

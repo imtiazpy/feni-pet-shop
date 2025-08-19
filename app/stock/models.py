@@ -9,10 +9,6 @@ from products.models import Product, Supplier
 
 
 """
-PoS interface (View) - 
--should have the change calculator. e.g., total price = 400, 500 given, return 100
--should not allow sales if short amount is added than the total price
--
 Batch Number (Model) - 
 - Batch number with common metadata (expiration, supplier etc) - A dedicated Batch model
 - Batch number as string - just a str field in StockItem
@@ -61,69 +57,86 @@ class StockItemManager(models.Manager):
         return stock_item
 
     @transaction.atomic
-    def reduce_stock(self, stock_item, quantity, notes="", created_by=None):
-        """Reduce stock quantity and log the removal in StockItemTracking."""
-        if quantity < 0:
-            raise ValidationError("Reduction quantity cannot be negative.")
-        if quantity > stock_item.quantity:
-            raise ValidationError(f"Cannot reduce {quantity} units; only {stock_item.quantity} available.")
-        stock_item.quantity -= quantity
+    def adjust_stock(self, stock_item, quantity, notes="", created_by=None):
+        """Adjust StockItem quantity and log changes in StockItemTracking."""
+        if not isinstance(quantity, int) or quantity < 0:
+            raise ValidationError("Quantity must be a non-negative integer.")
+        
+        # Fetch the original StockItem for comparison
+        old_item = StockItem.objects.get(pk=stock_item.pk)
+        old_quantity = old_item.quantity
+        
+        if quantity == old_quantity:
+            return stock_item  # No change, no tracking needed
+        
+        # Update quantity
+        stock_item.quantity = quantity
         stock_item.save()
+        
+        # Determine movement type and quantity change
+        movement_type = 'stock_increase' if quantity > old_quantity else 'stock_decrease'
+        quantity_change = abs(quantity - old_quantity)
+        
+        # Create tracking entry
+        notes_content = notes or f"Adjusted quantity for {stock_item.product.name} (Batch: {stock_item.batch_number})"
+        notes_content += f"\n Quantity changed from {old_quantity} to {quantity}"
+        
         StockItemTracking.objects.create(
             stock_item=stock_item,
-            quantity=quantity,
-            movement_type=StockItemTracking.MOVEMENT_TYPES.REMOVE,
-            notes=notes or f"Stock removed for {stock_item.product.name}",
+            quantity=quantity_change,
+            movement_type=movement_type,
+            notes=notes_content,
             created_by=created_by
         )
+        
         return stock_item
 
     @transaction.atomic
-    def update_stock(self, stock_item, quantity=None, stock_location=None, supplier=None, 
+    def update_stock(self, stock_item, stock_location=None, supplier=None, 
                     purchase_price=None, sale_price=None, expiration_date=None, 
                     notes="", created_by=None):
-        """Update StockItem attributes and log changes in StockItemTracking."""
-        # TODO: StockItemTracking is not creating when updating StockItem, fix it
-        changed = False
+        """Update StockItem attributes and log changes in StockItemTracking with a list of updated fields."""
         old_item = StockItem.objects.get(pk=stock_item.pk)
-        old_quantity = old_item.quantity
 
-        print(f"update_stock: quantity={quantity}, old_quantity={old_quantity}, type(quantity)={type(quantity)}")
-        
-        if quantity is not None:
-            if quantity < 0:
-                raise ValidationError("Quantity cannot be negative.")
-            stock_item.quantity = quantity
-            changed = True
-        if stock_location is not None:
+        changes = []
+
+        if stock_location is not None and stock_location != old_item.stock_location:
+            changes.append(f"stock_location to {stock_location}")
             stock_item.stock_location = stock_location
-            changed = True
-        if supplier is not None:
+        
+        if supplier is not None and supplier != old_item.supplier:
+            changes.append(f"supplier to {supplier or 'None'}")
             stock_item.supplier = supplier
-            changed = True
-        if purchase_price is not None:
+        
+        if purchase_price is not None and purchase_price != old_item.purchase_price:
+            changes.append(f"purchase_price to {purchase_price or 'None'}")
             stock_item.purchase_price = purchase_price
-            changed = True
-        if sale_price is not None:
+        
+        if sale_price is not None and sale_price != old_item.sale_price:
+            changes.append(f"sale_price to {sale_price or 'None'}")
             stock_item.sale_price = sale_price
-            changed = True
-        if expiration_date is not None:
+        
+        if expiration_date is not None and expiration_date != old_item.expiration_date:
+            changes.append(f"expiration_date to {expiration_date or 'None'}")
             stock_item.expiration_date = expiration_date
-            changed = True
 
-        if changed:
+        # Save and log only if changes occurred
+        if changes:
             stock_item.save()
-            if quantity is not None and quantity != old_quantity:
-                movement_type = StockItemTracking.MOVEMENT_TYPES.ADD if quantity > old_quantity else StockItemTracking.MOVEMENT_TYPES.REMOVE
-                quantity_change = abs(quantity - old_quantity)
-                StockItemTracking.objects.create(
-                    stock_item=stock_item,
-                    quantity=quantity_change,
-                    movement_type=movement_type,
-                    notes=notes or f"Stock updated for {stock_item.product.name}",
-                    created_by=created_by
-                )
+            # Create notes with list of changed fields
+            notes_content = notes or f"Updated {stock_item.product.name} (Batch: {stock_item.batch_number})"
+            notes_content += f"\n Changed: {', '.join(changes)}"
+            StockItemTracking.objects.create(
+                stock_item=stock_item,
+                quantity=old_item.quantity,
+                movement_type='update',
+                notes=notes_content,
+                created_by=created_by
+            )
+        
         return stock_item
+ 
+        
 
     @transaction.atomic
     def transfer_stock(self, stock_item, quantity, location_to, notes="", created_by=None):
@@ -197,7 +210,9 @@ class StockItem(AbstractBaseModel):
     purchase_price = models.DecimalField(
         max_digits=10, decimal_places=2, blank=True, null=True, validators=[MinValueValidator(0)]
     )
-    sale_price = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(0)])
+    sale_price = models.DecimalField(
+        max_digits=10, decimal_places=2, blank=True, null=True, validators=[MinValueValidator(0)]
+    )
     stock_location = models.ForeignKey(
         StockLocation, 
         on_delete=models.SET_NULL, 
@@ -238,7 +253,11 @@ class StockItemTracking(AbstractBaseModel):
     class MOVEMENT_TYPES(models.TextChoices):
         ADD = 'stock_added', 'Stock Added'
         REMOVE = 'stock_removed', 'Stock Removed'
+        UPDATE = 'update', 'Update'
         TRANSFER = 'transfer', 'Transfer'
+        SALE = 'sale', 'Sale'
+        STOCK_INCREASE = 'stock_increase', 'Stock Increase'
+        STOCK_DECREASE = 'stock_decrease', 'Stock Decrease'
 
     stock_item = models.ForeignKey(
         StockItem, 
@@ -266,7 +285,7 @@ class StockItemTracking(AbstractBaseModel):
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, blank=True, null=True)
 
     def __str__(self):
-        return f"{self.movement_type} {self.quantity} of {self.stock_item or self.notes}"
+        return f"{self.movement_type}: {self.stock_item or self.notes}"
     
     class Meta:
         verbose_name = "Stock Item Tracking"

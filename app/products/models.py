@@ -139,6 +139,8 @@ class Product(AbstractNameDescriptionModel):
         _("Price"), 
         max_digits=10, 
         decimal_places=2,
+        blank=True,
+        null=True,
         validators=[MinValueValidator(0)]
     )
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, blank=True, null=True, related_name='products')

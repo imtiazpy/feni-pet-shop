@@ -146,7 +146,7 @@ class StockItemCreateView(LoginRequiredMixin, PermissionRequiredMixin, RoleRequi
 
 class StockItemUpdateView(LoginRequiredMixin, PermissionRequiredMixin, RoleRequiredMixin, UpdateView):
     model = StockItem
-    fields = ['quantity', 'stock_location', 'expiration_date', 'supplier']
+    fields = ['stock_location', 'expiration_date', 'supplier', 'purchase_price', 'sale_price']
     template_name = 'stock/modals/stockitem_update_modal.html'
     permission_required = 'stock.change_stockitem'
     success_url = reverse_lazy('stock:stockitem_list')
@@ -164,19 +164,47 @@ class StockItemUpdateView(LoginRequiredMixin, PermissionRequiredMixin, RoleRequi
         try:
             stock_item = StockItem.objects.update_stock(
                 stock_item=self.object,
-                quantity=form.cleaned_data['quantity'],
                 stock_location=form.cleaned_data['stock_location'],
                 supplier=form.cleaned_data['supplier'],
+                purchase_price=form.cleaned_data['purchase_price'],
+                sale_price=form.cleaned_data['sale_price'],
                 expiration_date=form.cleaned_data['expiration_date'],
-                notes=form.cleaned_data.get('notes', f"Stock updated for {self.object.product.name}"),
+                notes=form.cleaned_data.get('notes'),
+                created_by=self.request.user
             )
             messages.success(self.request, f"Updated {stock_item.product.name} (Batch: {stock_item.batch_number})")
-            # return super().form_valid(form)
             return HttpResponseRedirect(self.success_url)
         except ValidationError as e:
             form.add_error(None, str(e))
             messages.error(self.request, str(e))
             return self.form_invalid(form)
+        
+class StockItemQuantityAdjustView(LoginRequiredMixin, RoleRequiredMixin, UpdateView):
+    model = StockItem
+    fields = ['quantity']
+    template_name = "stock/modals/stockitem_quantity_adjust_modal.html"
+    permission_required = 'stock.change_stockitem'
+    context_object_name = 'stock_item'
+    allowed_roles = ['admin', 'inventory_manager']
+    success_url = reverse_lazy('stock:stockitem_list')
+
+    def form_valid(self, form):
+        """Adjust StockItem quantity and log tracking."""
+        try:
+            stock_item = StockItem.objects.adjust_stock(
+                stock_item=self.object,
+                quantity=form.cleaned_data['quantity'],
+                notes=form.cleaned_data.get('notes', f"Quantity adjusted for {self.object.product.name}"),
+                created_by=self.request.user
+            )
+            messages.success(self.request, f"Adjusted quantity for {stock_item.product.name} (Batch: {stock_item.batch_number})")
+            return super().form_valid(form)
+        except ValidationError as e:
+            form.add_error(None, str(e))
+            messages.error(self.request, str(e))
+            return self.form_invalid(form)
+
+
 
 class StockItemDeleteView(LoginRequiredMixin, PermissionRequiredMixin, RoleRequiredMixin, DeleteView):
     model = StockItem
