@@ -175,21 +175,113 @@ class Product(AbstractNameDescriptionModel):
         if not self.sku:
             self.sku = f"SKU-{uuid.uuid4().hex[:8].upper()}"
 
+    # def generate_barcode_image(self):
+    #     """
+    #     Generate a barcode image from the barcode string.
+    #     """
+    #     if not self.barcode:
+    #         self.barcode = f"BAR-{uuid.uuid4().hex[:10].upper()}"
+
+    #     try:
+    #         barcode_obj = Code128(self.barcode, writer=ImageWriter())
+    #         buffer = BytesIO()
+    #         barcode_obj.write(buffer)
+    #         filename = f"{self.slug.lower().replace(' ', '-')}-barcode.png"
+    #         self.barcode_image.save(filename, File(buffer), save=False)
+    #     except Exception as e:
+    #         raise ValidationError(f"Failed to generate barcode: {str(e)}")
+
+    # def generate_barcode_image(self):
+    #     """
+    #     Generate a barcode image from the barcode string with minimal padding.
+    #     """
+    #     if not self.barcode:
+    #         self.barcode = f"BAR-{uuid.uuid4().hex[:10].upper()}"
+        
+    #     try:
+    #         # Create ImageWriter with custom options to minimize padding
+    #         writer = ImageWriter()
+            
+    #         # Set writer options to reduce padding/margins
+    #         writer_options = {
+    #             'module_width': 0.2,        # Width of individual bars
+    #             'module_height': 15.0,      # Height of bars
+    #             'quiet_zone': 0.5,          # Minimal quiet zone (padding)
+    #             'font_size': 8,             
+    #             'text_distance': 4,        
+    #             'background': 'white',      # White background
+    #             'foreground': 'black',      # Black bars
+    #         }
+            
+    #         barcode_obj = Code128(self.barcode, writer=writer)
+    #         buffer = BytesIO()
+            
+    #         # Generate barcode with custom options
+    #         barcode_obj.write(buffer, options=writer_options)
+            
+    #         filename = f"{self.slug.lower().replace(' ', '-')}-barcode.png"
+    #         self.barcode_image.save(filename, File(buffer), save=False)
+            
+    #     except Exception as e:
+    #         raise ValidationError(f"Failed to generate barcode: {str(e)}")
+
+
+
     def generate_barcode_image(self):
         """
-        Generate a barcode image from the barcode string.
+        Generate barcode with exact dimensions for 38mm x 25mm label.
         """
         if not self.barcode:
             self.barcode = f"BAR-{uuid.uuid4().hex[:10].upper()}"
-
+        
         try:
-            barcode_obj = Code128(self.barcode, writer=ImageWriter())
+            from PIL import Image
+            
+            writer = ImageWriter()
+            
+            # Calculate exact pixels for 38mm x 25mm at 300 DPI
+            # 1mm = 11.811 pixels at 300 DPI
+            label_width_px = int(38 * 11.811)   # ≈ 449px
+            label_height_px = int(25 * 11.811)  # ≈ 295px
+            
+            writer_options = {
+                'module_width': 0.15,       
+                'module_height': 10.0,      
+                'quiet_zone': 0.4,
+                'font_size': 6,
+                'text_distance': 3,
+                'background': 'white',
+                'foreground': 'black',
+                'dpi': 300,
+            }
+            
+            barcode_obj = Code128(self.barcode, writer=writer)
             buffer = BytesIO()
-            barcode_obj.write(buffer)
-            filename = f"{self.slug.lower().replace(' ', '-')}-barcode.png"
-            self.barcode_image.save(filename, File(buffer), save=False)
+            barcode_obj.write(buffer, options=writer_options)
+            
+            # Optional: Resize to exact label dimensions
+            buffer.seek(0)
+            img = Image.open(buffer)
+            
+            # Only resize if barcode is larger than label
+            if img.width > label_width_px or img.height > label_height_px:
+                img_resized = img.resize((label_width_px, label_height_px), Image.Resampling.LANCZOS)
+                
+                final_buffer = BytesIO()
+                img_resized.save(final_buffer, format='PNG', dpi=(300, 300))
+                
+                filename = f"{self.slug.lower().replace(' ', '-')}-barcode.png"
+                self.barcode_image.save(filename, File(final_buffer), save=False)
+            else:
+                filename = f"{self.slug.lower().replace(' ', '-')}-barcode.png"
+                self.barcode_image.save(filename, File(buffer), save=False)
+            
         except Exception as e:
             raise ValidationError(f"Failed to generate barcode: {str(e)}")
+
+
+
+
 
     def save(self, *args, **kwargs):
         """

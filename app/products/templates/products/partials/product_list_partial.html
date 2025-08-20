@@ -76,10 +76,11 @@
           <div class="tooltip" data-tip="Update Price">
             <a 
               class="btn btn-xs btn-accent btn-outline hover:btn-accent"
-              hx-get="{% url 'products:product_price_update' product.id %}" 
+              hx-get="#" 
               hx-target="#productModalContent"
               hx-swap="innerHTML" 
               onclick="productModal.showModal()"
+              disabled
             >
               <span class="w-4 h-4 flex items-center justify-center">
                 {% include 'includes/svg/bd_taka_icon.html' %}

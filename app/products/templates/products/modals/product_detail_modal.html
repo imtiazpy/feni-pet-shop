@@ -166,94 +166,103 @@
 
 function printBarcode(barcodeUrl, productName, sku, price) {
     const printWindow = window.open('', '_blank', 'width=400,height=300');
-
+    
     const printContent = `
         <!DOCTYPE html>
         <html>
         <head>
             <title>Print Barcode - ${sku}</title>
-            <style>
+            <meta charset="UTF-8">
+            <style type="text/css">
                 @page {
                     size: 1in 0.8in;
                     margin: 0;
                 }
-
-                @media print {
-                    body {
-                        margin: 0;
-                        padding: 0;
-                    }
-                }
-
                 body {
                     font-family: Arial, sans-serif;
-                    font-size: 7px;
                     margin: 0;
-                    padding: 0;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    height: 100vh;
-                    background: white;
+                    padding: 2px;
+                    width: 1in;
+                    height: 0.8in;
+                    box-sizing: border-box;
                 }
-
                 .label {
                     width: 100%;
                     height: 100%;
-                    padding: 2px 4px;
-                    box-sizing: border-box;
-                    display: flex;
-                    flex-direction: column;
-                    justify-content: space-between;
+                    display: block;
                 }
-
-                .top-row {
-                    display: flex;
-                    justify-content: space-between;
-                    font-size: 7px;
-                    font-weight: bold;
-                    white-space: nowrap;
-                    overflow: hidden;
+                .barcode-container {
+                    width: 100%;
+                    display: inline-block;
+                    position: relative;
                 }
-
                 .barcode-img {
                     width: 100%;
                     height: auto;
-                    margin: 2px 0;
+                    display: block;
+                    margin: 0;
+                    box-sizing: border-box;
+                }
+                .top-row {
+                    width: 100%;
+                    font-size: 7px;
+                    font-weight: bold;
+                    margin-bottom: 1px;
+                    height: 10px;
+                    position: relative;
                     display: block;
                 }
-
-                .sku {
-                    text-align: center;
-                    font-size: 6px;
-                    margin-top: 2px;
+                .product-name {
+                    position: absolute;
+                    left: 0;
+                    top: 0;
+                    text-align: left;
+                    max-width: 65%;
+                    margin-right: 10px;
+                    overflow: hidden;
+                    white-space: nowrap;
+                    text-overflow: ellipsis;
+                }
+                .price {
+                    position: absolute;
+                    right: 0;
+                    top: 0;
+                    text-align: right;
+                    white-space: nowrap;
                 }
             </style>
         </head>
         <body>
             <div class="label">
-                <div class="top-row">
-                    <div>${productName.substring(0, 12)}</div>
-                    <div>৳${parseFloat(price).toFixed(2)}</div>
+                <div class="barcode-container">
+                    <div class="top-row">
+                        <span class="product-name">${productName.substring(0, 12)}</span>
+                        <span class="price">&nbsp; &nbsp;(৳${parseFloat(price).toFixed(2)})</span>
+                    </div>
+                    <img src="${barcodeUrl}" class="barcode-img" alt="Barcode" />
                 </div>
-                <img src="${barcodeUrl}" class="barcode-img" alt="Barcode">
-                <div class="sku">${sku}</div>
             </div>
         </body>
         </html>
     `;
-
+    
+    printWindow.document.open();
     printWindow.document.write(printContent);
     printWindow.document.close();
-
-    printWindow.focus();
-    printWindow.print();
-
-    // Optional: Close the window automatically after print
-    printWindow.onafterprint = function () {
-      printWindow.close();
-    };
+    
+    // Wait for content to load before printing
+    printWindow.addEventListener('load', function() {
+        setTimeout(function() {
+            printWindow.focus();
+            printWindow.print();
+        }, 500);
+    });
+    
+    printWindow.addEventListener('afterprint', function() {
+        printWindow.close();
+    });
 }
+
 
 
 // Alternative function for printing multiple labels
