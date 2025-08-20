@@ -9,6 +9,11 @@ pillow = "*"
 django-extensions = "*"
 python-barcode = "*"
 faker = "*"
+python-escpos = "*"
+pyusb = "*"
+
+[packages.windows]
+pywin32 = "*"
 
 [dev-packages]
 

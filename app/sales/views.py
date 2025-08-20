@@ -7,6 +7,7 @@ from django.http import JsonResponse, HttpResponseRedirect
 from django.core.exceptions import ValidationError
 from stock.models import StockItem, Product
 from sales.models import Sale
+from sales.utils import print_invoice
 from core.mixins import RoleRequiredMixin
 
 
@@ -318,7 +319,7 @@ class SaleDetailView(LoginRequiredMixin, DetailView):
 
 
 class SalePoSCreateView(LoginRequiredMixin, RoleRequiredMixin, View):
-    template_name = 'sales/pos_create_test.html'
+    template_name = 'sales/pos_create_with_print.html'
     success_url = reverse_lazy('sales:sale_success')
     allowed_roles = ['cashier', 'inventory_manager', 'admin']
     permission_required = 'sales.add_sale'
@@ -548,6 +549,16 @@ class SalePoSCreateView(LoginRequiredMixin, RoleRequiredMixin, View):
                 discount_amount=discount_amount,
                 notes=notes
             )
+
+            try:
+                print_invoice(sale)
+            except Exception as e:
+                # logger.error(f"Error printing invoice: {str(e)}")
+                return JsonResponse({
+                    'status': 'error',
+                    'message': f'Sale #{sale.id} completed, but failed to print invoice: {str(e)}',
+                    'redirect_url': str(self.success_url)
+                })
             
             # Clear cart
             request.session['pos_cart'] = []
