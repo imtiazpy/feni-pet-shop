@@ -118,6 +118,10 @@ def print_invoice(sale):
 
         # Footer
         lines.append("\nThank you for shopping with us!\n".encode('utf-8'))
+
+        # Add a few line feeds to ensure paper clears the printer before cutting
+        lines.append(b"\n\n\n\n")
+
         lines.append(b"\x1D\x56\x00")  # Cut
 
         receipt = b''.join(lines)
