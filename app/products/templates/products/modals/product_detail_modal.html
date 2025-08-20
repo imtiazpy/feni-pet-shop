@@ -165,111 +165,96 @@
 <script>
 
 function printBarcode(barcodeUrl, productName, sku, price) {
-    // Create a new window for printing
     const printWindow = window.open('', '_blank', 'width=400,height=300');
-    
-    // HTML content for the print page
+
     const printContent = `
         <!DOCTYPE html>
         <html>
         <head>
-            <title>Barcode Label - ${sku}</title>
+            <title>Print Barcode - ${sku}</title>
             <style>
                 @page {
-                    size: 2.25in 1.25in; /* Standard price tag size */
-                    margin: 0.1in;
+                    size: 1in 0.8in;
+                    margin: 0;
                 }
+
                 @media print {
-                    body { 
-                        margin: 0; 
-                        padding: 0; 
-                        font-family: Arial, sans-serif;
+                    body {
+                        margin: 0;
+                        padding: 0;
                     }
-                    .no-print { display: none; }
                 }
+
                 body {
                     font-family: Arial, sans-serif;
+                    font-size: 7px;
                     margin: 0;
-                    padding: 5px;
+                    padding: 0;
                     display: flex;
-                    flex-direction: column;
                     align-items: center;
                     justify-content: center;
                     height: 100vh;
-                    box-sizing: border-box;
-                }
-                .label {
-                    border: 1px solid #000;
-                    padding: 8px;
-                    text-align: center;
                     background: white;
+                }
+
+                .label {
                     width: 100%;
-                    max-width: 200px;
+                    height: 100%;
+                    padding: 2px 4px;
                     box-sizing: border-box;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: space-between;
                 }
-                .product-name {
-                    font-size: 10px;
+
+                .top-row {
+                    display: flex;
+                    justify-content: space-between;
+                    font-size: 7px;
                     font-weight: bold;
-                    margin-bottom: 3px;
-                    word-wrap: break-word;
-                    line-height: 1.2;
+                    white-space: nowrap;
+                    overflow: hidden;
                 }
+
                 .barcode-img {
-                    max-width: 100%;
+                    width: 100%;
                     height: auto;
-                    margin: 3px 0;
+                    margin: 2px 0;
+                    display: block;
                 }
-                .price {
-                    font-size: 12px;
-                    font-weight: bold;
-                    margin-top: 3px;
-                }
+
                 .sku {
-                    font-size: 8px;
-                    color: #666;
-                    margin-top: 2px;
-                }
-                .print-controls {
-                    margin: 20px 0;
                     text-align: center;
-                }
-                .print-btn {
-                    background: #007bff;
-                    color: white;
-                    border: none;
-                    padding: 10px 20px;
-                    border-radius: 4px;
-                    cursor: pointer;
-                    margin: 0 5px;
-                }
-                .print-btn:hover {
-                    background: #0056b3;
+                    font-size: 6px;
+                    margin-top: 2px;
                 }
             </style>
         </head>
         <body>
-            <div class="print-controls no-print">
-                <button class="print-btn" onclick="window.print()">Print Label</button>
-                <button class="print-btn" onclick="window.close()">Close</button>
-            </div>
-            
             <div class="label">
-                <div class="product-name">${productName.substring(0, 30)}</div>
-                <img src="${barcodeUrl}" alt="Barcode" class="barcode-img">
-                <div class="price">৳ ${parseFloat(price).toFixed(2)}</div>
-                <div class="sku">SKU: ${sku}</div>
+                <div class="top-row">
+                    <div>${productName.substring(0, 12)}</div>
+                    <div>৳${parseFloat(price).toFixed(2)}</div>
+                </div>
+                <img src="${barcodeUrl}" class="barcode-img" alt="Barcode">
+                <div class="sku">${sku}</div>
             </div>
         </body>
         </html>
     `;
-    
-    // Write content to the new window
+
     printWindow.document.write(printContent);
     printWindow.document.close();
-    
-    // Focus on the new window
+
     printWindow.focus();
+    printWindow.print();
+
+    // Optional: Close the window automatically after print
+    printWindow.onafterprint = function () {
+      printWindow.close();
+    };
 }
+
 
 // Alternative function for printing multiple labels
 function printMultipleBarcodes(products) {
