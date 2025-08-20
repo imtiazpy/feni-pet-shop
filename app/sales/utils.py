@@ -111,7 +111,7 @@ def print_invoice(sale):
         # Totals
         lines.append(b"-" * 32 + b"\n")
         lines.append(b"\x1B\x61\x02")  # Right
-        lines.append(f"Subtotal: BDT {sale.subtotal:.2f}\n".encode('utf-8'))
+        lines.append(f"Subtotal: BDT {sale.total_amount:.2f}\n".encode('utf-8'))
         if sale.discount_amount > 0:
             lines.append(f"Discount: -BDT {sale.discount_amount:.2f}\n".encode('utf-8'))
         lines.append(f"Total:    BDT {sale.total_amount:.2f}\n".encode('utf-8'))
