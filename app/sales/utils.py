@@ -5,7 +5,7 @@ from django.core.exceptions import ValidationError
 if platform.system() == "Windows":
     import win32print
     import win32con
-    
+
 # else:
 #     raise ValidationError("Printing is only supported on Windows")
 
@@ -79,7 +79,7 @@ def print_invoice(sale):
         raise ValidationError("Printing is only supported on Windows")
     
     try:
-        printer_name = getattr(settings, "PRINTER_NAME", "POS-80C")
+        printer_name = "POS-80C"
         hprinter = win32print.OpenPrinter(printer_name)
         hjob = win32print.StartDocPrinter(hprinter, 1, (f"Receipt_{sale.id}", None, "RAW"))
         win32print.StartPagePrinter(hprinter)
