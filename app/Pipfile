@@ -11,9 +11,10 @@ python-barcode = "*"
 faker = "*"
 python-escpos = "*"
 pyusb = "*"
+pywin32 = "*"
 
 [packages.windows]
-pywin32 = "*"
+
 
 [dev-packages]
 
