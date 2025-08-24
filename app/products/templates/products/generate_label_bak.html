@@ -1,0 +1,274 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Generate Product Labels | Pet IMS{% endblock %}
+
+{% block extra_css %}
+<style>
+  @media print {
+    @page {
+      size: 38mm 25mm;
+      margin: 0;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      width: 38mm;
+      height: 25mm;
+    }
+
+    .print-area {
+      width: 100%;
+      height: 100%;
+    }
+
+    .no-print {
+      display: none !important;
+    }
+  }
+
+  .barcode-preview {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border: 2px dashed #dee2e6;
+    transition: all 0.3s ease;
+  }
+
+  .barcode-preview.active {
+    background: white;
+    border: 2px solid #10b981;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  }
+
+  #barcode-canvas {
+    display: block;
+    margin: 0 auto;
+    max-width: 100%;
+    height: auto;
+  }
+
+  .alert-success {
+    background-color: #d1fae5;
+    border-color: #10b981;
+    color: #065f46;
+  }
+
+  .alert-error {
+    background-color: #fee2e2;
+    border-color: #ef4444;
+    color: #991b1b;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto bg-white rounded-lg shadow-md p-8 my-4">
+  <h1 class="text-3xl font-bold text-gray-900 mb-2">Generate Product Labels</h1>
+  <p class="text-gray-600 mb-6">Select a product to generate a printable barcode label.</p>
+
+  <!-- Alert Box -->
+  <div id="alert-box" class="hidden mb-4 p-4 rounded border text-sm"></div>
+
+  <!-- Form -->
+  <form id="label-form" class="space-y-4">
+    <div class="form-control">
+      <label for="product-select" class="block font-medium mb-1 text-base-100">
+        Select Product <span class="text-red-300">*</span>
+      </label>
+      <select name="product_id" id="product-select" class="select select-bordered w-full bg-white border border-gray-300 rounded px-3 py-2 text-base-100" required>
+        <option value="">Choose a product...</option>
+        {% for product in products %}
+          <option value="{{ product.id }}" 
+                  data-name="{{ product.name }}" 
+                  data-price="{{ product.sale_price|default:0 }}"
+                  data-barcode="{{ product.barcode }}">
+            {{ product.name }} — ${{ product.sale_price|default:0 }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+    <button type="submit" class="btn btn-primary px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition">Generate Label</button>
+  </form>
+
+  <!-- Preview Area -->
+  <div id="preview-area" class="barcode-preview mt-6 p-6 rounded-lg text-center hidden">
+    <div class="max-w-md mx-auto bg-white rounded-lg shadow p-4">
+      <div class="mb-4 text-sm text-gray-600 flex justify-between items-center">
+        <div id="product-name" class="font-semibold text-gray-900"></div>
+        <div id="product-price" class="text-green-600 font-medium"></div>
+      </div>
+      <div class="print-area">
+        <canvas id="barcode-canvas"></canvas>
+      </div>
+      <button onclick="printLabel()" class="btn mt-4 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition">Print Label</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+  const form = document.getElementById('label-form');
+  const previewArea = document.getElementById('preview-area');
+  const alertBox = document.getElementById('alert-box');
+
+  form.addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const select = document.getElementById('product-select');
+    const option = select.options[select.selectedIndex];
+
+    if (!option.value) {
+      showAlert('Please select a product.', 'error');
+      return;
+    }
+
+    const data = {
+      name: option.dataset.name,
+      price: parseFloat(option.dataset.price).toFixed(2),
+      barcode: option.dataset.barcode
+    };
+
+    generateBarcode(data);
+  });
+
+  function generateBarcode(data) {
+    const canvas = document.getElementById('barcode-canvas');
+    const ctx = canvas.getContext('2d');
+
+    canvas.width = 449;
+    canvas.height = 295;
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    JsBarcode(canvas, data.barcode, {
+      format: 'CODE128',
+      width: 1.2,
+      height: 100,
+      displayValue: true,
+      margin: 15,
+      background: '#ffffff',
+      lineColor: '#000000'
+    });
+
+    ctx.fillStyle = '#000000';
+    ctx.font = 'bold 14px Arial';
+    ctx.textAlign = 'left';
+    const maxNameWidth = canvas.width - 100;
+    let name = data.name;
+    if (ctx.measureText(name).width > maxNameWidth) {
+      while (ctx.measureText(name + '...').width > maxNameWidth) {
+        name = name.slice(0, -1);
+      }
+      name += '...';
+    }
+    ctx.fillText(name, 15, 25);
+
+    ctx.textAlign = 'right';
+    ctx.font = '12px Arial';
+    ctx.fillText('$' + data.price, canvas.width - 15, 25);
+
+    ctx.textAlign = 'center';
+    ctx.font = '10px monospace';
+    ctx.fillText(data.barcode, canvas.width / 2, canvas.height - 10);
+
+    // Set preview info
+    document.getElementById('product-name').textContent = data.name;
+    document.getElementById('product-price').textContent = '$' + data.price;
+    previewArea.classList.remove('hidden');
+    previewArea.classList.add('active');
+
+    showAlert('Label generated successfully.', 'success');
+  }
+
+  function showAlert(msg, type) {
+    alertBox.className = `mb-4 p-4 rounded border text-sm alert-${type}`;
+    alertBox.textContent = msg;
+    alertBox.classList.remove('hidden');
+    if (type === 'success') {
+      setTimeout(() => alertBox.classList.add('hidden'), 5000);
+    }
+  }
+
+  function printLabel() {
+  const canvas = document.getElementById('barcode-canvas');
+  const dataUrl = canvas.toDataURL();
+  const name = document.getElementById('product-name').textContent;
+  const price = document.getElementById('product-price').textContent;
+
+  const printWindow = window.open('', '_blank');
+  printWindow.document.write(`
+    <html>
+      <head>
+        <title>Print Label - ${name}</title>
+        <style>
+          @media print {
+            @page { size: 38mm 25mm; margin: 0; }
+            body {
+              margin: 0;
+              padding: 0;
+              width: 38mm;
+              height: 25mm;
+            }
+          }
+
+          body {
+            margin: 0;
+            padding: 2px;
+            font-family: Arial, sans-serif;
+            width: 38mm;
+            height: 25mm;
+            box-sizing: border-box;
+          }
+
+          #label {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: stretch;
+            text-align: center;
+          }
+
+          #top-row {
+            font-size: 6px;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 2px;
+          }
+
+          #barcode-img {
+            width: 100%;
+            height: auto;
+            margin-top: 1px;
+          }
+        </style>
+      </head>
+      <body>
+        <div id="label">
+          <div id="top-row">
+            <span>${name}</span>
+            <span>${price}</span>
+          </div>
+          <img id="barcode-img" src="${dataUrl}" alt="Barcode">
+        </div>
+
+        <script>
+          window.onload = function() {
+            setTimeout(function() {
+              window.print();
+              setTimeout(function() { window.close(); }, 500);
+            }, 300);
+          }
+        <\/script>
+      </body>
+    </html>
+  `);
+
+  printWindow.document.close();
+}
+
+</script>
+{% endblock %}

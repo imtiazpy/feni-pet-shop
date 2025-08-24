@@ -233,6 +233,29 @@
         </button>
       </div>
 
+      <!-- Labels -->
+      <div>
+        <a 
+          @click="setActivePage('products/labels/generate')"
+          href="{% url 'products:generate_label' %}"
+          hx-target="#mainContent"
+          hx-push-url="true"
+          class="w-full flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors group cursor-pointer"
+          :class="currentPage === 'products/labels/generate' ? 'bg-primary text-white' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'"
+        >
+          <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+              d="M3 7h18M3 12h18M3 17h18M7 3v4M11 3v4M15 3v4M19 3v4M7 17v4M11 17v4M15 17v4M19 17v4" />
+          </svg>
+          <span x-show="sidebarOpen" x-transition:enter="transition-opacity duration-300 delay-100"
+            x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+            x-transition:leave="transition-opacity duration-150" x-transition:leave-start="opacity-100"
+            x-transition:leave-end="opacity-0" class="font-medium">
+            Labels
+          </span>
+        </a>
+      </div>
+
       <!-- Reports -->
       <div>
         <button @click="toggleMenu('reports')"

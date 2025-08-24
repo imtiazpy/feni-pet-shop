@@ -25,6 +25,7 @@ urlpatterns = [
     path('suppliers/<int:pk>/', views.SupplierDetailView.as_view(), name='supplier_detail'),
     path('suppliers/<int:pk>/update/', views.SupplierUpdateView.as_view(), name='supplier_update'),
     path('suppliers/<int:pk>/delete/', views.SupplierDeleteView.as_view(), name='supplier_delete'),
+    path('labels/generate/', views.GenerateLabelView.as_view(), name='generate_label'),
     # path('price-history/', views.price_history_list, name='price_history_list'),
     # path('price-history/<int:pk>/', views.price_history_detail, name='price_history_detail'),
     # path('price-history/<int:pk>/update/', views.price_history_update, name='price_history_update'),

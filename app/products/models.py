@@ -227,60 +227,12 @@ class Product(AbstractNameDescriptionModel):
 
 
 
-    def generate_barcode_image(self):
+    def generate_barcode(self):
         """
-        Generate barcode with exact dimensions for 38mm x 25mm label.
+        Assign a unique barcode to the product if not already set.
         """
         if not self.barcode:
             self.barcode = f"BAR-{uuid.uuid4().hex[:10].upper()}"
-        
-        try:
-            from PIL import Image
-            
-            writer = ImageWriter()
-            
-            # Calculate exact pixels for 38mm x 25mm at 300 DPI
-            # 1mm = 11.811 pixels at 300 DPI
-            label_width_px = int(38 * 11.811)   # ≈ 449px
-            label_height_px = int(25 * 11.811)  # ≈ 295px
-            
-            writer_options = {
-                'module_width': 0.15,       
-                'module_height': 10.0,      
-                'quiet_zone': 0.4,
-                'font_size': 6,
-                'text_distance': 3,
-                'background': 'white',
-                'foreground': 'black',
-                'dpi': 300,
-            }
-            
-            barcode_obj = Code128(self.barcode, writer=writer)
-            buffer = BytesIO()
-            barcode_obj.write(buffer, options=writer_options)
-            
-            # Optional: Resize to exact label dimensions
-            buffer.seek(0)
-            img = Image.open(buffer)
-            
-            # Only resize if barcode is larger than label
-            if img.width > label_width_px or img.height > label_height_px:
-                img_resized = img.resize((label_width_px, label_height_px), Image.Resampling.LANCZOS)
-                
-                final_buffer = BytesIO()
-                img_resized.save(final_buffer, format='PNG', dpi=(300, 300))
-                
-                filename = f"{self.slug.lower().replace(' ', '-')}-barcode.png"
-                self.barcode_image.save(filename, File(final_buffer), save=False)
-            else:
-                filename = f"{self.slug.lower().replace(' ', '-')}-barcode.png"
-                self.barcode_image.save(filename, File(buffer), save=False)
-            
-        except Exception as e:
-            raise ValidationError(f"Failed to generate barcode: {str(e)}")
-
-
-
 
 
     def save(self, *args, **kwargs):
@@ -292,7 +244,8 @@ class Product(AbstractNameDescriptionModel):
         updated_by = kwargs.pop('updated_by', None)
 
         # For updates with price history tracking
-        # TODO: We will move this logic to signal
+        # TODO: We will move this logic to signal, update: priceHistory tracking is not being used for now
+        # we are tracking StockItemTracking for price updates
         if not is_new and track_price_history and self.pk:
             original = Product.objects.get(pk=self.pk)
             if (original.cost_price != self.cost_price or 
@@ -309,7 +262,7 @@ class Product(AbstractNameDescriptionModel):
         # For new instances, generate barcode and save again
         if is_new:
             self.generate_sku()
-            self.generate_barcode_image()
+            self.generate_barcode()
         
         super().save(*args, **kwargs)
 

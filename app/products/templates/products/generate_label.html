@@ -1,0 +1,553 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Generate Product Labels | Pet IMS{% endblock %}
+
+{% block extra_css %}
+<style>
+  @media print {
+    @page {
+      size: 38mm 25mm;
+      margin: 0;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      width: 38mm;
+      height: 25mm;
+    }
+
+    .print-area {
+      width: 100%;
+      height: 100%;
+    }
+
+    .no-print {
+      display: none !important;
+    }
+  }
+
+  .barcode-preview {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border: 2px dashed #dee2e6;
+    transition: all 0.3s ease;
+  }
+
+  .barcode-preview.active {
+    background: white;
+    border: 2px solid #10b981;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  }
+
+  #barcode-canvas {
+    display: block;
+    margin: 0 auto;
+    max-width: 100%;
+    height: auto;
+  }
+
+  .alert-success {
+    background-color: #d1fae5;
+    border-color: #10b981;
+    color: #065f46;
+  }
+
+  .alert-error {
+    background-color: #fee2e2;
+    border-color: #ef4444;
+    color: #991b1b;
+  }
+
+  .glass-effect {
+    backdrop-filter: blur(10px);
+    background: rgba(255, 255, 255, 0.9);
+  }
+
+  .label-icon {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  }
+
+  .step-indicator {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  }
+
+  .preview-card {
+    background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+    border: 1px solid #e2e8f0;
+    box-shadow: 
+      0 4px 6px -1px rgba(0, 0, 0, 0.1),
+      0 2px 4px -1px rgba(0, 0, 0, 0.06),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  }
+
+  .floating-action {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    z-index: 50;
+  }
+
+  @keyframes pulse-slow {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+  }
+
+  .pulse-slow {
+    animation: pulse-slow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  .gradient-text {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 p-4">
+  <div class="max-w-7xl mx-auto mt-8">
+    <!-- Header Section -->
+    <div class="mb-8">
+      <div class="flex items-center gap-4 mb-8">
+        <div class="label-icon w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg">
+          <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2M7 4h10M7 4l-2 18h14l-2-18M9 9v6m6-6v6"/>
+          </svg>
+        </div>
+        <div>
+          <h1 class="text-4xl font-bold gradient-text">Generate Product Labels</h1>
+          <p class="text-gray-600 text-lg">Create professional barcode labels for your products</p>
+        </div>
+      </div>
+      
+      <!-- Progress Steps -->
+      <div class="flex items-center gap-4 mb-6">
+        <div class="flex items-center gap-2">
+          <div class="step-indicator w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold">1</div>
+          <span class="font-medium text-gray-700">Select Product</span>
+        </div>
+        <div class="flex-1 h-px bg-gray-300"></div>
+        <div class="flex items-center gap-2">
+          <div id="step-2" class="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-gray-500 text-sm font-bold transition-all duration-300">2</div>
+          <span class="text-gray-500 font-medium">Generate Label</span>
+        </div>
+        <div class="flex-1 h-px bg-gray-300"></div>
+        <div class="flex items-center gap-2">
+          <div id="step-3" class="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-gray-500 text-sm font-bold transition-all duration-300">3</div>
+          <span class="text-gray-500 font-medium">Print</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <!-- Left Panel - Form -->
+      <div class="space-y-6">
+        <!-- Alert Box -->
+        <div id="alert-box" class="hidden p-4 rounded-lg border text-sm font-medium"></div>
+
+        <!-- Product Selection Card -->
+        <div class="glass-effect rounded-2xl p-8 shadow-xl">
+          <div class="flex items-center gap-3 mb-6">
+            <div class="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
+              <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+              </svg>
+            </div>
+            <h2 class="text-2xl font-bold text-gray-900">Select Product</h2>
+          </div>
+
+          <form id="label-form" class="space-y-6">
+            <div class="space-y-2">
+              <label for="product-select" class="block text-sm font-semibold text-gray-700">
+                Choose Product <span class="text-red-500">*</span>
+              </label>
+              <div>
+                <select name="product_id" id="product-select" class="select select-bordered w-full bg-white border-2 border-gray-200 rounded-xl px-4 py-2 text-gray-800 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition-all duration-200" required>
+                  <option value="">🔍 Search and select a product...</option>
+                  {% for product in products %}
+                    <option value="{{ product.id }}" 
+                            data-name="{{ product.name }}" 
+                            data-price="{{ product.sale_price|default:0 }}"
+                            data-barcode="{{ product.barcode }}">
+                      {{ product.name }} — ৳{{ product.sale_price|default:0 }}
+                    </option>
+                  {% endfor %}
+                </select>
+                
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-full py-4 text-lg font-semibold bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 border-0 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5">
+              <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+              </svg>
+              Generate Label
+            </button>
+          </form>
+        </div>
+
+        <!-- Instructions Card -->
+        <div class="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center">
+              <svg class="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+            </div>
+            <h3 class="font-semibold text-gray-800">Quick Instructions</h3>
+          </div>
+          <ul class="space-y-2 text-sm text-gray-600">
+            <li class="flex items-center gap-2">
+              <div class="w-2 h-2 bg-blue-400 rounded-full"></div>
+              Select a product from the dropdown menu
+            </li>
+            <li class="flex items-center gap-2">
+              <div class="w-2 h-2 bg-green-400 rounded-full"></div>
+              Click "Generate Label" to create the barcode
+            </li>
+            <li class="flex items-center gap-2">
+              <div class="w-2 h-2 bg-purple-400 rounded-full"></div>
+              Use the print button for physical labels
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Right Panel - Preview -->
+      <div class="space-y-6">
+        <!-- Preview Area -->
+        <div id="preview-area" class="barcode-preview rounded-2xl p-8 text-center hidden min-h-[400px] flex items-center justify-center">
+          <div class="w-full max-w-md">
+            <!-- Preview Placeholder -->
+            <div id="preview-placeholder" class="text-center text-gray-400">
+              <svg class="w-24 h-24 mx-auto mb-4 pulse-slow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2M7 4h10M7 4l-2 18h14l-2-18M9 9v6m6-6v6"/>
+              </svg>
+              <p class="text-lg font-medium mb-2">Label Preview</p>
+              <p class="text-sm">Select a product to see the generated label</p>
+            </div>
+
+            <!-- Actual Preview -->
+            <div id="preview-content" class="preview-card rounded-xl p-6 hidden">
+              <div class="mb-4 text-sm text-gray-600 flex justify-between items-center">
+                <div id="product-name" class="font-semibold text-gray-900"></div>
+                <div id="product-price" class="text-green-600 font-bold bg-green-50 px-2 py-1 rounded-lg"></div>
+              </div>
+              <div class="print-area bg-white rounded-lg p-4 shadow-inner">
+                <canvas id="barcode-canvas"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Actions Card -->
+        <div id="actions-card" class="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 hidden">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="font-semibold text-gray-800 flex items-center gap-2">
+              <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              Label Ready
+            </h3>
+            <span class="badge badge-success badge-sm">Generated</span>
+          </div>
+          
+          <div class="flex gap-3">
+            <button onclick="printLabel()" class="btn btn-success text-white flex-1 py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 border-0 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200">
+              <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+              </svg>
+              Print Label
+            </button>
+            
+            <button onclick="resetForm()" class="btn btn-ghost py-3 px-4 border border-gray-300 rounded-xl hover:bg-gray-50 transition-all duration-200">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Stats Card -->
+        <div class="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-2xl p-6 text-white shadow-lg">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="font-semibold mb-1">Total Products</h3>
+              <p class="text-2xl font-bold">{{ products.count }}</p>
+            </div>
+            <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Floating Help Button -->
+  <div class="floating-action">
+    <div class="dropdown dropdown-top dropdown-end">
+      <div tabindex="0" role="button" class="btn btn-circle btn-primary shadow-lg hover:shadow-xl">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+      </div>
+      <ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow-lg bg-base-100 rounded-box w-64">
+        <li class="menu-title">
+          <span>Need Help?</span>
+        </li>
+        <li><a href="#" class="text-sm">How to generate labels</a></li>
+        <li><a href="#" class="text-sm">Print troubleshooting</a></li>
+        <li><a href="#" class="text-sm">Barcode formats</a></li>
+      </ul>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/JsBarcode/JsBarcode.all.min.js' %}"></script>
+<script>
+  const form = document.getElementById('label-form');
+  const previewArea = document.getElementById('preview-area');
+  const previewPlaceholder = document.getElementById('preview-placeholder');
+  const previewContent = document.getElementById('preview-content');
+  const actionsCard = document.getElementById('actions-card');
+  const alertBox = document.getElementById('alert-box');
+
+  // Initialize preview area
+  previewArea.classList.remove('hidden');
+
+  form.addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const select = document.getElementById('product-select');
+    const option = select.options[select.selectedIndex];
+
+    if (!option.value) {
+      showAlert('Please select a product.', 'error');
+      return;
+    }
+
+    const data = {
+      name: option.dataset.name,
+      price: parseFloat(option.dataset.price).toFixed(2),
+      barcode: option.dataset.barcode
+    };
+
+    generateBarcode(data);
+  });
+
+  function generateBarcode(data) {
+    const canvas = document.getElementById('barcode-canvas');
+    const ctx = canvas.getContext('2d');
+
+    canvas.width = 449;
+    canvas.height = 295;
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    JsBarcode(canvas, data.barcode, {
+      format: 'CODE128',
+      width: 1.2,
+      height: 100,
+      displayValue: true,
+      margin: 6,
+      background: '#ffffff',
+      lineColor: '#000000'
+    });
+
+    ctx.fillStyle = '#000000';
+    ctx.font = 'bold 14px Arial';
+    ctx.textAlign = 'left';
+    const maxNameWidth = canvas.width - 100;
+    let name = data.name;
+    if (ctx.measureText(name).width > maxNameWidth) {
+      while (ctx.measureText(name + '...').width > maxNameWidth) {
+        name = name.slice(0, -1);
+      }
+      name += '...';
+    }
+    ctx.fillText(name, 15, 25);
+
+    ctx.textAlign = 'right';
+    ctx.font = '12px Arial';
+    ctx.fillText('৳' + data.price, canvas.width - 15, 25);
+
+    ctx.textAlign = 'center';
+    ctx.font = '10px monospace';
+    ctx.fillText(data.barcode, canvas.width / 2, canvas.height - 10);
+
+    // Update UI
+    document.getElementById('product-name').textContent = data.name;
+    document.getElementById('product-price').textContent = '৳' + data.price;
+    
+    previewPlaceholder.classList.add('hidden');
+    previewContent.classList.remove('hidden');
+    previewArea.classList.add('active');
+    actionsCard.classList.remove('hidden');
+
+    // Update step indicators
+    updateStepIndicator(2, 'active');
+    updateStepIndicator(3, 'ready');
+
+    showAlert('Label generated successfully! Ready to print.', 'success');
+  }
+
+  function updateStepIndicator(step, status) {
+    const stepEl = document.getElementById(`step-${step}`);
+    if (status === 'active') {
+      stepEl.className = 'step-indicator w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold transition-all duration-300';
+      stepEl.nextElementSibling.className = 'font-medium text-gray-700';
+    } else if (status === 'ready') {
+      stepEl.className = 'w-8 h-8 rounded-full bg-green-500 flex items-center justify-center text-white text-sm font-bold transition-all duration-300';
+      stepEl.innerHTML = '✓';
+      stepEl.nextElementSibling.className = 'text-green-600 font-medium';
+    }
+  }
+
+  function showAlert(msg, type) {
+    alertBox.className = `p-4 rounded-lg border text-sm font-medium alert-${type}`;
+    alertBox.textContent = msg;
+    alertBox.classList.remove('hidden');
+    if (type === 'success') {
+      setTimeout(() => alertBox.classList.add('hidden'), 5000);
+    }
+  }
+
+  function resetForm() {
+    document.getElementById('product-select').value = '';
+    previewPlaceholder.classList.remove('hidden');
+    previewContent.classList.add('hidden');
+    previewArea.classList.remove('active');
+    actionsCard.classList.add('hidden');
+    alertBox.classList.add('hidden');
+    
+    // Reset step indicators
+    document.getElementById('step-2').className = 'w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-gray-500 text-sm font-bold transition-all duration-300';
+    document.getElementById('step-2').innerHTML = '2';
+    document.getElementById('step-2').nextElementSibling.className = 'text-gray-500 font-medium';
+    
+    document.getElementById('step-3').className = 'w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-gray-500 text-sm font-bold transition-all duration-300';
+    document.getElementById('step-3').innerHTML = '3';
+    document.getElementById('step-3').nextElementSibling.className = 'text-gray-500 font-medium';
+  }
+
+  function printLabel() {
+    const canvas = document.getElementById('barcode-canvas');
+    const dataUrl = canvas.toDataURL();
+    const name = document.getElementById('product-name').textContent;
+    const price = document.getElementById('product-price').textContent;
+
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Print Label - ${name}</title>
+          <style>
+            @media print {
+              @page { 
+                size: 38mm 25mm; 
+                margin: 0; 
+              }
+              body {
+                margin: 0;
+                padding: 0;
+                width: 38mm;
+                height: 25mm;
+                overflow: hidden;
+              }
+            }
+
+            * {
+              margin: 0;
+              padding: 0;
+              box-sizing: border-box;
+            }
+
+            body {
+              margin: 0;
+              padding: 2px;
+              font-family: Arial, sans-serif;
+              width: 38mm;
+              height: 25mm;
+              overflow: hidden;
+              position: relative;
+            }
+
+            #label {
+              width: 36mm;
+              height: 23mm;
+              display: block;
+              position: relative;
+              overflow: hidden;
+              page-break-inside: avoid;
+              break-inside: avoid;
+            }
+
+            #top-row {
+              font-size: 5px;
+              font-weight: bold;
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              padding: 0 4px;
+              position: absolute;
+              top: 0;
+              left: 0;
+              right: 0;
+              z-index: 2;
+              background: white;
+            }
+
+            #top-row .name {
+              max-width: 20mm;
+              overflow: hidden;
+              white-space: nowrap;
+              text-overflow: ellipsis;
+            }
+
+            #top-row .price {
+              font-weight: bold;
+            }
+
+            #barcode-img {
+              width: 36mm;
+              height: 20mm;
+              object-fit: contain;
+              position: absolute;
+              top: 2mm;
+              left: 0;
+              display: block;
+            }
+          </style>
+        </head>
+        <body>
+          <div id="label">
+            <div id="top-row">
+              <span class="name">${name}</span>
+              <span class="price">${price}</span>
+            </div>
+            <img id="barcode-img" src="${dataUrl}" alt="Barcode">
+          </div>
+
+          <script>
+            window.onload = function() {
+              setTimeout(function() {
+                window.print();
+                setTimeout(function() { window.close(); }, 500);
+              }, 300);
+            }
+          <\/script>
+        </body>
+      </html>
+    `);
+
+    printWindow.document.close();
+  }
+</script>
+{% endblock %}

@@ -1,9 +1,10 @@
-from django.shortcuts import redirect
-from django.views.generic import ListView, CreateView, DetailView, UpdateView, DeleteView
+from django.shortcuts import redirect, get_object_or_404
+from django.views.generic import ListView, CreateView, DetailView, UpdateView, DeleteView, TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
 from django.urls import reverse_lazy
 from django.db.models import Prefetch, Q
+from django.http import JsonResponse
 
 from .models import Product, Category, Supplier
 from core.mixins import RoleRequiredMixin
@@ -317,4 +318,54 @@ class SupplierDeleteView(LoginRequiredMixin, RoleRequiredMixin, DeleteView):
     def form_invalid(self, form):
         messages.error(self.request, "There was an error deleting the supplier. Please try again.")
         return super().form_invalid(form)
+    
+
+
+
+class GenerateLabelView(LoginRequiredMixin, TemplateView):
+    template_name = 'products/generate_label.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['products'] = Product.objects.all().order_by('-created_at')
+
+        if self.request.headers.get('HX-Request'):
+            context['template_to_extend'] = 'partials/base_empty.html'
+        else:
+            context['template_to_extend'] = 'new_dash_base.html'
+
+        return context
+
+    def post(self, request, *args, **kwargs):
+        try:
+            product_id = request.POST.get('product_id')
+            if not product_id:
+                return JsonResponse({
+                    'status': 'error',
+                    'message': 'Please select a product'
+                }, status=400)
+
+            product = get_object_or_404(Product, id=product_id)
+            
+            # Generate barcode if not exists
+            barcode = product.barcode or f"PET{str(product.id).zfill(6)}"
+            
+            return JsonResponse({
+                'status': 'success',
+                'barcode': barcode,
+                'name': product.name,
+                'price': float(product.sale_price) if product.sale_price else 0.00,
+                'category': product.category.name if hasattr(product, 'category') and product.category else 'N/A'
+            })
+            
+        except Product.DoesNotExist:
+            return JsonResponse({
+                'status': 'error',
+                'message': 'Product not found'
+            }, status=404)
+        except Exception as e:
+            return JsonResponse({
+                'status': 'error',
+                'message': 'An error occurred while generating the label'
+            }, status=500)
 
