@@ -353,10 +353,11 @@
 
     JsBarcode(canvas, data.barcode, {
       format: 'CODE128',
-      width: 4,
-      height: 100,
+      width: 6,
+      height: 220,
       displayValue: true,
-      margin: 6,
+      fontSize: 34,
+      margin: 10,
       background: '#ffffff',
       lineColor: '#000000'
     });
@@ -471,7 +472,7 @@
 
             body {
               margin: 0;
-              padding: 2px;
+              padding: 2px 4px;
               font-family: Arial, sans-serif;
               width: 38mm;
               height: 25mm;
