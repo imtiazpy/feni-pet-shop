@@ -353,35 +353,64 @@
 
     JsBarcode(canvas, data.barcode, {
       format: 'CODE128',
-      width: 8,
-      height: 160,
+      width: 10,
+      height: 560,
       displayValue: true,
-      fontSize: 34,
-      margin: 10,
+      fontSize: 84,
+      // margin: 40,
+      marginTop: 20,
+      marginBottom: 0,
+      marginLeft: 20,
+      marginRight: 20,
+      textMargin: 20,
       background: '#ffffff',
       lineColor: '#000000'
     });
 
     ctx.fillStyle = '#000000';
-    ctx.font = 'bold 14px Arial';
+    // ctx.font = 'bold 14px Arial';
     ctx.textAlign = 'left';
-    const maxNameWidth = canvas.width - 100;
-    let name = data.name;
-    if (ctx.measureText(name).width > maxNameWidth) {
-      while (ctx.measureText(name + '...').width > maxNameWidth) {
-        name = name.slice(0, -1);
-      }
-      name += '...';
-    }
-    ctx.fillText(name, 15, 25);
+    // const maxNameWidth = canvas.width - 50;
+    // let name = data.name;
+    // if (ctx.measureText(name).width > maxNameWidth) {
+    //   while (ctx.measureText(name + '...').width > maxNameWidth) {
+    //     name = name.slice(0, -1);
+    //   }
+    //   name += '...';
+    // }
+    // ctx.fillText(name, 15, 25);
 
+    // ctx.textAlign = 'right';
+    // ctx.font = '12px Arial';
+    // ctx.fillText('৳' + data.price, canvas.width - 15, 25);
+
+    // ctx.textAlign = 'center';
+    // ctx.font = '10px monospace';
+    // ctx.fillText(data.barcode, canvas.width / 2, canvas.height - 10);
+    const maxNameWidth = canvas.width - 100;
+    const words = data.name.split(' ');
+    let line = '';
+    let y = 25;
+
+    for (let n = 0; n < words.length; n++) {
+      const testLine = line + words[n] + ' ';
+      const metrics = ctx.measureText(testLine);
+      const testWidth = metrics.width;
+
+      if (testWidth > maxNameWidth && n > 0) {
+        ctx.fillText(line, 15, y);
+        line = words[n] + ' ';
+        y += 16; // line height
+      } else {
+        line = testLine;
+      }
+    }
+    ctx.fillText(line, 15, y);
+
+    // Now draw the price on the top-right (match Y position of first line)
     ctx.textAlign = 'right';
     ctx.font = '12px Arial';
     ctx.fillText('৳' + data.price, canvas.width - 15, 25);
-
-    ctx.textAlign = 'center';
-    ctx.font = '10px monospace';
-    ctx.fillText(data.barcode, canvas.width / 2, canvas.height - 10);
 
     // Update UI
     document.getElementById('product-name').textContent = data.name;
@@ -491,29 +520,25 @@
             }
 
             #top-row {
-              font-size: 10px;
-              font-weight: bold;
-              display: flex;
-              justify-content: space-between;
+              display: grid;
+              grid-template-columns: 1fr auto;
+              gap: 4px;
               align-items: center;
-              padding: 0 4px;
-              position: absolute;
-              top: 0;
-              left: 0;
-              right: 0;
-              z-index: 2;
-              background: white;
+              padding: 2px 4px;
             }
 
             #top-row .name {
-              max-width: 20mm;
-              overflow: hidden;
-              white-space: nowrap;
-              text-overflow: ellipsis;
+              font-weight: bold;
+              word-wrap: break-word;
+              white-space: normal;
+              font-size: 6px;
+              line-height: 1.2;
             }
 
             #top-row .price {
+              font-size: 10px;
               font-weight: bold;
+              white-space: nowrap;
             }
 
             #barcode-img {
