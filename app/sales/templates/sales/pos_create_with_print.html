@@ -107,7 +107,7 @@
     </div>
 
     <!-- Status Messages -->
-    <div x-show="message" class="mt-4" x-transition>
+    <div x-show="message" class="mt-4 toast toast-top toast-end z-50" x-transition>
       <div class="alert" :class="messageType === 'success' ? 'alert-success' : 'alert-error'">
         <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
