@@ -6,7 +6,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{% block title %}Inventory Management System{% endblock %}</title>
+  <title x-text="pageTitle">imPoS</title>
 
   <!-- Tailwind CSS CDN -->
   <script src="{% static 'js/new/tailwind.min.js' %}"></script>
@@ -37,6 +37,7 @@
     { 
       sidebarOpen: true, 
       currentPage: '{{ request.path|slice:'1:-1' }}',
+      pageTitle: 'imPoS',
       openMenus: {},
       toggleSidebar() { 
         this.sidebarOpen = !this.sidebarOpen 
@@ -51,7 +52,14 @@
       setActivePage(page) {
         this.currentPage = page;
       },
-    }" class="bg-base-200 dark:bg-gray-900 transition-colors duration-300" x-cloak>
+      setTitle(title) {
+        this.pageTitle = title;
+        document.title = title;
+      },
+    }" 
+    class="bg-base-200 dark:bg-gray-900 transition-colors duration-300" 
+    x-cloak
+  >
   <!-- Header -->
   {% include 'includes/new_dash_header.html' %}
 
@@ -62,7 +70,7 @@
   <main class="transition-all duration-300 min-h-screen pt-16" :class="sidebarOpen ? 'lg:ml-64' : 'lg:ml-16'">
     <div class="p-6 h-[calc(100vh-4rem)] overflow-y-auto">
       <!-- Breadcrumb -->
-      {% include 'includes/new_breadcrumb.html' %}
+      {% comment %} {% include 'includes/new_breadcrumb.html' %} {% endcomment %}
 
       <!-- Content Block for Django Templates -->
       <div id="mainContent" class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4">

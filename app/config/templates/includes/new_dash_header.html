@@ -35,7 +35,7 @@
       </a>
 
       <a 
-        @click="setActivePage('sales/pos')"
+        @click="setActivePage('sales/pos'); setTitle('PoS - imPoS')"
         hx-get="{% url 'sales:sale_pos_create' %}"
         hx-target="#mainContent"
         hx-push-url="true"
