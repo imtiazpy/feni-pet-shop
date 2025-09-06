@@ -30,4 +30,5 @@ urlpatterns = [
     # path('price-history/<int:pk>/', views.price_history_detail, name='price_history_detail'),
     # path('price-history/<int:pk>/update/', views.price_history_update, name='price_history_update'),
     # path('price-history/<int:pk>/delete/', views.price_history_delete, name='price_history_delete'),
+    path('search/', views.product_search_api, name='search_products'),
 ]

@@ -3,7 +3,7 @@ from django.views.generic import ListView, CreateView, DetailView, UpdateView, D
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
 from django.urls import reverse_lazy
-from django.db.models import Prefetch, Q
+from django.db.models import Q
 from django.http import JsonResponse
 
 from .models import Product, Category, Supplier
@@ -321,13 +321,29 @@ class SupplierDeleteView(LoginRequiredMixin, RoleRequiredMixin, DeleteView):
     
 
 
+def product_search_api(request):
+    query = request.GET.get('q', '')
+    products = Product.objects.filter(name__icontains=query).order_by('-created_at')[:25]
+
+    results = []
+    for product in products:
+        results.append({
+            "value": product.id,
+            "text": f"{product.name} — ৳{product.sale_price or 0}",
+            "name": product.name,
+            "price": float(product.sale_price or 0),
+            "barcode": product.barcode
+        })
+
+    return JsonResponse(results, safe=False)
+
 
 class GenerateLabelView(LoginRequiredMixin, TemplateView):
     template_name = 'products/generate_label.html'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['products'] = Product.objects.all().order_by('-created_at')
+        context['total_products'] = Product.objects.count()
 
         if self.request.headers.get('HX-Request'):
             context['template_to_extend'] = 'partials/base_empty.html'

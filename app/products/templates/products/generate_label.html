@@ -89,7 +89,7 @@
 
   @keyframes pulse-slow {
     0%, 100% { opacity: 1; }
-    50% { opacity: 0.7; }
+    50% { opacity: 0.3; }
   }
 
   .pulse-slow {
@@ -165,15 +165,7 @@
               </label>
               <div>
                 <select name="product_id" id="product-select" class="select select-bordered w-full bg-white border-2 border-gray-200 rounded-xl px-4 py-2 text-gray-800 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition-all duration-200" required>
-                  <option value="">🔍 Search and select a product...</option>
-                  {% for product in products %}
-                    <option value="{{ product.id }}" 
-                            data-name="{{ product.name }}" 
-                            data-price="{{ product.sale_price|default:0 }}"
-                            data-barcode="{{ product.barcode }}">
-                      {{ product.name }} — ৳{{ product.sale_price|default:0 }}
-                    </option>
-                  {% endfor %}
+                  
                 </select>
                 
               </div>
@@ -275,7 +267,7 @@
           <div class="flex items-center justify-between">
             <div>
               <h3 class="font-semibold mb-1">Total Products</h3>
-              <p class="text-2xl font-bold">{{ products.count }}</p>
+              <p class="text-2xl font-bold">{{ total_products }}</p>
             </div>
             <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
               <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -326,17 +318,17 @@
     e.preventDefault();
 
     const select = document.getElementById('product-select');
-    const option = select.options[select.selectedIndex];
+    const selectedOption = select.tomselect.getOption(select.value);
 
-    if (!option.value) {
+    if (!selectedOption || !select.value) {
       showAlert('Please select a product.', 'error');
       return;
     }
 
     const data = {
-      name: option.dataset.name,
-      price: parseFloat(option.dataset.price).toFixed(2),
-      barcode: option.dataset.barcode
+      name: selectedOption.dataset.name,
+      price: parseFloat(selectedOption.dataset.price).toFixed(2),
+      barcode: selectedOption.dataset.barcode
     };
 
     generateBarcode(data);
@@ -364,25 +356,7 @@
     });
 
     ctx.fillStyle = '#000000';
-    // ctx.font = 'bold 14px Arial';
     ctx.textAlign = 'left';
-    // const maxNameWidth = canvas.width - 50;
-    // let name = data.name;
-    // if (ctx.measureText(name).width > maxNameWidth) {
-    //   while (ctx.measureText(name + '...').width > maxNameWidth) {
-    //     name = name.slice(0, -1);
-    //   }
-    //   name += '...';
-    // }
-    // ctx.fillText(name, 15, 25);
-
-    // ctx.textAlign = 'right';
-    // ctx.font = '12px Arial';
-    // ctx.fillText('৳' + data.price, canvas.width - 15, 25);
-
-    // ctx.textAlign = 'center';
-    // ctx.font = '10px monospace';
-    // ctx.fillText(data.barcode, canvas.width / 2, canvas.height - 10);
     const maxNameWidth = canvas.width - 100;
     const words = data.name.split(' ');
     let line = '';
@@ -571,5 +545,40 @@
 
     printWindow.document.close();
   }
+
+  new TomSelect("#product-select", {
+    placeholder: "🔍 Search and select a product...",
+    valueField: "value",
+    labelField: "text",
+    searchField: "text",
+    loadThrottle: 100,
+    maxOptions: 100,
+    allowEmptyOption: true,
+
+    load: function(query, callback) {
+      if (!query.length) return callback();
+
+      fetch(`/products/search/?q=${encodeURIComponent(query)}`)
+        .then(response => response.json())
+        .then(json => {
+          callback(json);
+        }).catch(() => {
+          callback();
+        });
+    },
+
+    render: {
+      option: function(data, escape) {
+        return `<div 
+          data-name="${escape(data.name)}" 
+          data-barcode="${escape(data.barcode)}" 
+          data-price="${escape(data.price)}"
+        >
+          ${escape(data.text)}
+        </div>`;
+      }
+    }
+
+  });
 </script>
 {% endblock %}
